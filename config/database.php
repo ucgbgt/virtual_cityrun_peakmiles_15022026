@@ -4,6 +4,7 @@ define('DB_NAME', 'bayarqri_peakmiles');
 define('DB_USER', 'bayarqri_peakmiles');
 define('DB_PASS', '@Darsal123');
 define('DB_CHARSET', 'utf8mb4');
+// v2
 
 function getDB(): PDO {
     static $pdo = null;

@@ -19,7 +19,7 @@ jobs:
         with:
           server: ftp.bayarqris.net
           username: peakmiles@peakmiles.id
-          password: ${{ secrets.FTP_PASSWORD }}
+          password: peakmiles123
           port: 21
           server-dir: /public_html/
           exclude: |

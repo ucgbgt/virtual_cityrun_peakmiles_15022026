@@ -21,7 +21,7 @@ jobs:
           username: peakmiles@peakmiles.id
           password: peakmiles123
           port: 21
-          server-dir: /
+          server-dir: /public_html/
           exclude: |
             **/.git*
             **/.git*/**

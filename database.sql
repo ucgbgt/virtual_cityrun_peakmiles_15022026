@@ -1,9 +1,6 @@
 -- StrideNation Virtual Run Database Schema
 -- MySQL Database
 
-CREATE DATABASE IF NOT EXISTS stridenation CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE stridenation;
-
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,

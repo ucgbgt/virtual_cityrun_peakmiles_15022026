@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>E-Certificate - Maulana M Yusuf</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Open+Sans:wght@300;400;600&display=swap");
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1122px; height: 794px; background: #fff; font-family: "Open Sans", sans-serif; display: flex; align-items: center; justify-content: center; }
+  .cert { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #16213e 100%); overflow: hidden; }
+  .cert::before { content: ""; position: absolute; inset: 20px; border: 2px solid #f97316; opacity: 0.5; }
+  .cert::after { content: ""; position: absolute; inset: 28px; border: 1px solid #f97316; opacity: 0.2; }
+  .bg-circle { position: absolute; border-radius: 50%; opacity: 0.05; }
+  .bg-circle-1 { width: 600px; height: 600px; background: #f97316; top: -200px; right: -100px; }
+  .bg-circle-2 { width: 400px; height: 400px; background: #f97316; bottom: -150px; left: -100px; }
+  .content { position: relative; z-index: 10; text-align: center; color: #fff; padding: 40px; }
+  .brand { font-size: 14px; letter-spacing: 6px; color: #f97316; text-transform: uppercase; margin-bottom: 8px; }
+  .cert-title { font-family: "Playfair Display", serif; font-size: 42px; font-weight: 900; color: #fff; margin-bottom: 20px; }
+  .presented { font-size: 13px; color: #9ca3af; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+  .name { font-family: "Playfair Display", serif; font-size: 52px; font-weight: 700; color: #f97316; margin-bottom: 20px; line-height: 1.2; }
+  .desc { font-size: 15px; color: #d1d5db; line-height: 1.8; margin-bottom: 28px; }
+  .stats { display: flex; gap: 60px; justify-content: center; margin-bottom: 32px; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 28px; font-weight: 700; color: #f97316; }
+  .stat-label { font-size: 11px; color: #9ca3af; letter-spacing: 2px; text-transform: uppercase; }
+  .divider { width: 200px; height: 1px; background: linear-gradient(to right, transparent, #f97316, transparent); margin: 0 auto 24px; }
+  .footer { font-size: 11px; color: #6b7280; letter-spacing: 1px; }
+  .event-name { font-size: 13px; color: #d1d5db; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="bg-circle bg-circle-1"></div>
+  <div class="bg-circle bg-circle-2"></div>
+  <div class="content">
+    <div class="brand">PeakMiles</div>
+    <h1 class="cert-title">FINISHER CERTIFICATE</h1>
+    <div class="divider"></div>
+    <p class="presented">This is to certify that</p>
+    <div class="name">Maulana M Yusuf</div>
+    <p class="desc">has successfully completed the virtual run challenge<br>and achieved the status of <strong>FINISHER</strong></p>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val">10K</div>
+        <div class="stat-label">Category</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">12.00 km</div>
+        <div class="stat-label">Total Distance</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">23 February 2026</div>
+        <div class="stat-label">Completed On</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="event-name">StrideNation Virtual Run 2026</div>
+    <div class="footer">PeakMiles &bull; peakmiles.id &bull; Virtual Run Event</div>
+  </div>
+</div>
+</body>
+</html>

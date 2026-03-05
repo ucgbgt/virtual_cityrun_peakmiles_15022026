@@ -1,0 +1,17 @@
+Options -Indexes
+
+# PHP upload settings
+php_value upload_max_filesize 10M
+php_value post_max_size 12M
+php_value max_execution_time 60
+
+# Security headers
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set X-Content-Type-Options "nosniff"
+
+# Protect sensitive files
+<FilesMatch "\.(sql|log|md)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>

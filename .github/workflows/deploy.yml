@@ -17,9 +17,10 @@ jobs:
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ftp.bayarqris.net
+          username: peakmiles@peakmiles.id
           password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
           server-dir: /public_html/
           exclude: |
             **/.git*

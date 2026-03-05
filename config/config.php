@@ -3,7 +3,7 @@
 date_default_timezone_set('Asia/Jakarta');
 
 define('SITE_NAME', 'PeakMiles');
-define('SITE_URL', 'https://cityrun.site');
+define('SITE_URL', 'https://peakmiles.id');
 define('SITE_TAGLINE', 'Run Your Way. Anywhere. Anytime.');
 define('NUSATIX_URL', 'https://nusatix.com');
 

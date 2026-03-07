@@ -3,7 +3,10 @@
 date_default_timezone_set('Asia/Jakarta');
 
 define('SITE_NAME', 'PeakMiles');
-define('SITE_URL', 'https://peakmiles.id');
+$_protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$_host     = $_SERVER['HTTP_HOST'] ?? 'peakmiles.id';
+define('SITE_URL', $_protocol . '://' . $_host);
+unset($_protocol, $_host);
 define('SITE_TAGLINE', 'Run Your Way. Anywhere. Anytime.');
 define('NUSATIX_URL', 'https://nusatix.com');
 

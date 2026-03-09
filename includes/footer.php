@@ -26,7 +26,7 @@
           <a href="#" class="btn-outline-custom btn-sm-custom" style="padding:8px 12px;"><i class="fab fa-facebook"></i></a>
         </div>
         <div class="footer-link" style="cursor:default;"><i class="fa fa-envelope me-2" style="color:var(--primary)"></i> info@peakmiles.id</div>
-        <div class="footer-link" style="cursor:default;"><i class="fa fa-phone me-2" style="color:var(--primary)"></i> +62 812-3456-7890</div>
+        <div class="footer-link" style="cursor:default;"><i class="fa fa-phone me-2" style="color:var(--primary)"></i> +62 851-1120-6025</div>
       </div>
     </div>
     <div class="footer-bottom">

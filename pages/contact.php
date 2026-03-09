@@ -22,8 +22,8 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="card-custom mt-4">
           <div class="card-icon"><i class="fab fa-whatsapp"></i></div>
           <h4 style="color:#fff;margin-bottom:8px;">WhatsApp</h4>
-          <p style="color:var(--gray-light);">+62 812-3456-7890</p>
-          <a href="https://wa.me/628123456789" target="_blank" class="btn-primary-custom btn-sm-custom mt-2">
+          <p style="color:var(--gray-light);">+62 851-1120-6025</p>
+          <a href="https://wa.me/6285111206025" target="_blank" class="btn-primary-custom btn-sm-custom mt-2">
             <i class="fab fa-whatsapp"></i> Chat WhatsApp
           </a>
         </div>

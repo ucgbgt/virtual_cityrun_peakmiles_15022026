@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/functions.php';
 startSession();
 $flash = getFlash();
@@ -32,7 +32,7 @@ $currentUser = isLoggedIn() ? getCurrentUser() : null;
 
 <nav class="navbar navbar-expand-lg">
   <div class="container">
-    <a href="<?= SITE_URL ?>/" class="navbar-brand">Budapest Vrtl Hlf Mrthn<span> 2026</span></a>
+    <a href="<?= SITE_URL ?>/" class="navbar-brand">Peak<span>Miles</span></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
       <span class="navbar-toggler-icon"></span>
     </button>

@@ -245,7 +245,7 @@ $csrf = generateCSRFToken();
               Belum ada submission. Yuk mulai lari!
               <?php if ($registration): ?>
               <div class="mt-3">
-                <button onclick="openModal('submitRunModal')" class="btn-primary-custom btn-sm-custom">
+                <button onclick="openModal('<?= $isActive ? 'submitRunModal' : 'inactiveNoticeModal' ?>')" class="btn-primary-custom btn-sm-custom">
                   <i class="fa fa-plus"></i> Submit Lari Pertama
                 </button>
               </div>

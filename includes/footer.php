@@ -1,4 +1,4 @@
-﻿<footer class="footer">
+<footer class="footer">
   <div class="container">
     <div class="row g-5">
       <div class="col-lg-4">
@@ -21,7 +21,7 @@
       <div class="col-lg-4">
         <div class="footer-heading">Ikuti Kami</div>
         <div class="d-flex gap-2 mb-3">
-          <a href="#" class="btn-outline-custom btn-sm-custom" style="padding:8px 12px;"><i class="fab fa-instagram"></i></a>
+          <a href="https://instagram.com/peakmiles.id" target="_blank" class="btn-outline-custom btn-sm-custom" style="padding:8px 12px;" title="@peakmiles.id"><i class="fab fa-instagram"></i></a>
           <a href="#" class="btn-outline-custom btn-sm-custom" style="padding:8px 12px;"><i class="fab fa-tiktok"></i></a>
           <a href="#" class="btn-outline-custom btn-sm-custom" style="padding:8px 12px;"><i class="fab fa-facebook"></i></a>
         </div>
@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>&copy; <?= date('Y') ?> Budapest Vrtl Hlf Mrthn 2026. All rights reserved.</span>
+      <span>&copy; <?= date('Y') ?> PeakMiles. All rights reserved.</span>
       <span>Made with <i class="fa fa-heart" style="color:var(--primary)"></i> for Indonesian Runners</span>
     </div>
   </div>

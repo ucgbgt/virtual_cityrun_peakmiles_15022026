@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Kontak';
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -14,7 +14,10 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="card-custom">
           <div class="card-icon"><i class="fa fa-envelope"></i></div>
           <h4 style="color:#fff;margin-bottom:8px;">Email</h4>
-          <p style="color:var(--gray-light);">info@Budapest Vrtl Hlf Mrthn 2026.id</p>
+          <p style="color:var(--gray-light);">info@peakmiles.id</p>
+          <a href="mailto:info@peakmiles.id" class="btn-outline-custom btn-sm-custom mt-2">
+            <i class="fa fa-envelope"></i> Kirim Email
+          </a>
         </div>
         <div class="card-custom mt-4">
           <div class="card-icon"><i class="fab fa-whatsapp"></i></div>
@@ -27,7 +30,12 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="card-custom mt-4">
           <div class="card-icon"><i class="fab fa-instagram"></i></div>
           <h4 style="color:#fff;margin-bottom:8px;">Instagram</h4>
-          <a href="https://instagram.com/Budapest Vrtl Hlf Mrthn 2026.id" target="_blank" style="color:var(--primary);text-decoration:none;">@Budapest Vrtl Hlf Mrthn 2026.id</a>
+          <a href="https://instagram.com/peakmiles.id" target="_blank" style="color:var(--primary);text-decoration:none;">@peakmiles.id</a>
+          <div class="mt-2">
+            <a href="https://instagram.com/peakmiles.id" target="_blank" class="btn-primary-custom btn-sm-custom">
+              <i class="fab fa-instagram"></i> Buka Instagram
+            </a>
+          </div>
         </div>
       </div>
       <div class="col-lg-7">

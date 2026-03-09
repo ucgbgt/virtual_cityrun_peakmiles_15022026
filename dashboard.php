@@ -433,6 +433,34 @@ $csrf = generateCSRFToken();
 <script>
 let dashSelectedMethod = '';
 
+function renderGroupedMethods(groups, containerEl, radioName, selectFn) {
+  const catIconMap = {
+    qris:            { icon:'fa-qrcode',    color:'#22c55e' },
+    virtual_account: { icon:'fa-university', color:'#3b82f6' },
+    ewallet:         { icon:'fa-wallet',    color:'#a855f7' },
+    retail:          { icon:'fa-store',     color:'#f59e0b' },
+    lainnya:         { icon:'fa-ellipsis-h',color:'#6b7280' },
+  };
+  let html = '';
+  groups.forEach(function(group) {
+    const meta = catIconMap[group.category] || catIconMap['lainnya'];
+    html += `<div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <i class="fa ${meta.icon}" style="color:${meta.color};font-size:12px;width:14px;text-align:center;"></i>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${meta.color};">${group.categoryLabel}</span>
+      </div>`;
+    group.methods.forEach(function(m) {
+      html += `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;" class="dash-pay-item">
+        <input type="radio" name="${radioName}" value="${m.paymentMethod}" style="accent-color:var(--primary);" onchange="${selectFn}('${m.paymentMethod}',this.closest('.dash-pay-item'))">
+        <img src="${m.paymentImage}" style="width:36px;height:24px;object-fit:contain;" onerror="this.style.display='none'">
+        <div style="flex:1;"><div style="color:#fff;font-size:12px;font-weight:600;">${m.paymentName}</div></div>
+      </label>`;
+    });
+    html += '</div>';
+  });
+  containerEl.innerHTML = html;
+}
+
 function initPayment() {
   openModal('paymentModal');
   // Load metode pembayaran
@@ -440,23 +468,15 @@ function initPayment() {
     .then(r => r.json())
     .then(data => {
       document.getElementById('dashPayLoading').style.display = 'none';
-      if (data.success && data.methods && data.methods.length > 0) {
+      if (data.success && data.groups && data.groups.length > 0) {
         const container = document.getElementById('dashPayMethods');
-        let html = '<div style="font-size:12px;color:var(--gray-light);margin-bottom:8px;font-weight:600;">Pilih Metode:</div>';
-        data.methods.forEach(function(m) {
-          html += `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;" class="dash-pay-item">
-            <input type="radio" name="dashMethod" value="${m.paymentMethod}" style="accent-color:var(--primary);" onchange="selectDashMethod('${m.paymentMethod}',this.closest('.dash-pay-item'))">
-            <img src="${m.paymentImage}" style="width:36px;height:24px;object-fit:contain;" onerror="this.style.display='none'">
-            <div style="flex:1;"><div style="color:#fff;font-size:12px;font-weight:600;">${m.paymentName}</div></div>
-          </label>`;
-        });
-        container.innerHTML = html;
+        renderGroupedMethods(data.groups, container, 'dashMethod', 'selectDashMethod');
         container.style.display = 'block';
         document.getElementById('dashPayButtons').style.display = 'block';
       } else {
         const errEl = document.getElementById('dashPayError');
         errEl.style.display = 'block';
-        errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Tidak ada metode tersedia.';
+        errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + (data.message || 'Tidak ada metode tersedia.');
       }
     })
     .catch(() => {

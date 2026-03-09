@@ -349,25 +349,46 @@ document.querySelectorAll('.cat-radio').forEach(function(radio) {
 
 let selectedPaymentMethod = '';
 
+// Render grouped payment methods
+function renderGroupedMethods(groups, containerEl, radioName, selectFn) {
+  const catIconMap = {
+    qris:            { icon:'fa-qrcode',    color:'#22c55e', label:'QRIS' },
+    virtual_account: { icon:'fa-university', color:'#3b82f6', label:'Virtual Account' },
+    ewallet:         { icon:'fa-wallet',    color:'#a855f7', label:'E-Wallet' },
+    retail:          { icon:'fa-store',     color:'#f59e0b', label:'Retail' },
+    lainnya:         { icon:'fa-ellipsis-h',color:'#6b7280', label:'Lainnya' },
+  };
+  let html = '';
+  groups.forEach(function(group) {
+    const meta = catIconMap[group.category] || catIconMap['lainnya'];
+    html += `<div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <i class="fa ${meta.icon}" style="color:${meta.color};font-size:13px;width:16px;text-align:center;"></i>
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${meta.color};">${group.categoryLabel}</span>
+      </div>`;
+    group.methods.forEach(function(m) {
+      html += `<label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:all 0.2s;" class="pay-method-item">
+        <input type="radio" name="${radioName}" value="${m.paymentMethod}" style="accent-color:var(--primary);" onchange="${selectFn}('${m.paymentMethod}',this.closest('.pay-method-item'))">
+        <img src="${m.paymentImage}" style="width:40px;height:28px;object-fit:contain;" onerror="this.style.display='none'">
+        <div style="flex:1;">
+          <div style="color:#fff;font-size:13px;font-weight:600;">${m.paymentName}</div>
+          ${parseInt(m.totalFee) > 0 ? `<div style="color:var(--gray-light);font-size:11px;">Biaya: Rp ${parseInt(m.totalFee).toLocaleString('id-ID')}</div>` : ''}
+        </div>
+      </label>`;
+    });
+    html += '</div>';
+  });
+  containerEl.innerHTML = html;
+}
+
 // Load payment methods saat modal tampil
 fetch('<?= SITE_URL ?>/api/payment-methods.php')
   .then(r => r.json())
   .then(data => {
     document.getElementById('paymentLoading').style.display = 'none';
-    if (data.success && data.methods && data.methods.length > 0) {
+    if (data.success && data.groups && data.groups.length > 0) {
       const container = document.getElementById('paymentMethods');
-      let html = '<div style="font-size:13px;color:var(--gray-light);margin-bottom:10px;font-weight:600;">Pilih Metode Pembayaran:</div>';
-      data.methods.forEach(function(m) {
-        html += `<label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;" class="pay-method-item">
-          <input type="radio" name="payMethod" value="${m.paymentMethod}" style="accent-color:var(--primary);" onchange="selectMethod('${m.paymentMethod}',this.closest('.pay-method-item'))">
-          <img src="${m.paymentImage}" style="width:40px;height:28px;object-fit:contain;" onerror="this.style.display='none'">
-          <div style="flex:1;">
-            <div style="color:#fff;font-size:13px;font-weight:600;">${m.paymentName}</div>
-            ${m.totalFee > 0 ? `<div style="color:var(--gray-light);font-size:11px;">Biaya: Rp ${parseInt(m.totalFee).toLocaleString('id-ID')}</div>` : ''}
-          </div>
-        </label>`;
-      });
-      container.innerHTML = html;
+      renderGroupedMethods(data.groups, container, 'payMethod', 'selectMethod');
       container.style.display = 'block';
       document.getElementById('paymentButtons').style.display = 'flex';
     } else {

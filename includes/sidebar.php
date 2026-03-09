@@ -26,6 +26,9 @@ $activeNav = $activeNav ?? '';
       <a href="<?= SITE_URL ?>/admin/event-settings.php" class="sidebar-link <?= $activeNav === 'admin-event' ? 'active' : '' ?>">
         <i class="fa fa-cog"></i> Event Settings
       </a>
+      <a href="<?= SITE_URL ?>/admin/payment-settings.php" class="sidebar-link <?= $activeNav === 'admin-payment' ? 'active' : '' ?>">
+        <i class="fa fa-credit-card"></i> Metode Pembayaran
+      </a>
       <a href="<?= SITE_URL ?>/admin/admins.php" class="sidebar-link <?= $activeNav === 'admin-admins' ? 'active' : '' ?>">
         <i class="fa fa-user-shield"></i> Manajemen Admin
       </a>

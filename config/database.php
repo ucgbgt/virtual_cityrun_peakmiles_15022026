@@ -1,6 +1,6 @@
-﻿<?php
+<?php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'Budapest Vrtl Hlf Mrthn 2026');
+define('DB_NAME', 'stridenation');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');

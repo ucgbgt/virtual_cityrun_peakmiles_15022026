@@ -157,7 +157,7 @@ function generateCertificateHTML(array $data): string {
   <div class="bg-circle bg-circle-1"></div>
   <div class="bg-circle bg-circle-2"></div>
   <div class="content">
-    <div class="brand">Budapest Vrtl Hlf Mrthn 2026</div>
+    <div class="brand">PeakMiles</div>
     <h1 class="cert-title">FINISHER CERTIFICATE</h1>
     <div class="divider"></div>
     <p class="presented">This is to certify that</p>
@@ -179,7 +179,7 @@ function generateCertificateHTML(array $data): string {
     </div>
     <div class="divider"></div>
     <div class="event-name">' . htmlspecialchars($data['event_name']) . '</div>
-    <div class="footer">Budapest Vrtl Hlf Mrthn 2026 &bull; peakmiles.id &bull; Virtual Run Event</div>
+    <div class="footer">PeakMiles &bull; peakmiles.id &bull; Virtual Run Event</div>
   </div>
 </div>
 </body>

@@ -1,4 +1,4 @@
-﻿-- Budapest Vrtl Hlf Mrthn 2026 Database Schema
+﻿-- StrideNation Virtual Run Database Schema
 -- MySQL Database
 
 -- Users table
@@ -176,11 +176,11 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 -- Seed: Users (password: User@123)
 INSERT INTO users (name, email, phone, password_hash, role, is_active) VALUES
-('Admin PeakMiles', 'admin@Budapest Vrtl Hlf Mrthn 2026.id', '08123456789', '$2y$12$JxHuqu1NP2ooNS4bhfNFnuEKrEWYh8iseS3kl/CzbaDMKeyogp1Ve', 'admin', 1),
+('Admin PeakMiles', 'admin@stridenation.id', '08123456789', '$2y$12$JxHuqu1NP2ooNS4bhfNFnuEKrEWYh8iseS3kl/CzbaDMKeyogp1Ve', 'admin', 1),
 ('Yusuf', 'yusuf@gmail.com', '', '$2y$12$JxHuqu1NP2ooNS4bhfNFnuEKrEWYh8iseS3kl/CzbaDMKeyogp1Ve', 'user', 1);
 
 -- Seed: Default active event
 INSERT INTO events (name, slug, description, start_date, end_date, target_10k, target_21k, fee_10k, fee_21k, registration_url) VALUES
-('Budapest Vrtl Hlf Mrthn 2026', 'peakmiles-virtual-run-2026', 
+('PeakMiles Virtual Run 2026', 'peakmiles-virtual-run-2026', 
 'Event virtual run terbesar yang bisa kamu ikuti dari mana saja! Pilih kategori 10K atau 21K dan buktikan semangatmu sebagai pelari sejati.', 
 '2026-01-01', '2026-12-31', 10.00, 21.00, 179000, 199000, 'https://nusatix.com');

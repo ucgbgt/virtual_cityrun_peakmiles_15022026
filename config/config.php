@@ -2,7 +2,7 @@
 // Set timezone ke WIB (Indonesia)
 date_default_timezone_set('Asia/Jakarta');
 
-define('SITE_NAME', 'Budapest Vrtl Hlf Mrthn 2026');
+define('SITE_NAME', 'PeakMiles');
 $_protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $_host     = $_SERVER['HTTP_HOST'] ?? 'peakmiles.id';
 $_subdir   = ($_host === 'localhost') ? '/stridenation' : '';

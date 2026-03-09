@@ -83,7 +83,7 @@ $csrf = generateCSRFToken();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daftar — Budapest Vrtl Hlf Mrthn 2026</title>
+<title>Daftar — PeakMiles</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -100,7 +100,7 @@ $csrf = generateCSRFToken();
         <i class="fa fa-person-running"></i>
       </div>
       <h2 style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:16px;">
-        Bergabung di<br><span style="color:var(--primary);">Budapest Vrtl Hlf Mrthn 2026</span>
+        Bergabung di<br><span style="color:var(--primary);">PeakMiles</span>
       </h2>
       <?php if ($event): ?>
       <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:20px;margin:24px auto;max-width:280px;">

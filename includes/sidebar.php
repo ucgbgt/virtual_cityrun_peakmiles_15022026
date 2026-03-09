@@ -6,7 +6,7 @@ $activeNav = $activeNav ?? '';
 ?>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <a href="<?= SITE_URL ?>/">Budapest Vrtl Hlf Mrthn<span> 2026</span></a>
+    <a href="<?= SITE_URL ?>/">Peak<span>Miles</span></a>
   </div>
   <nav class="sidebar-nav">
     <?php if (isAdmin()): ?>

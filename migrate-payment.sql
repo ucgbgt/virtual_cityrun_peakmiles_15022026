@@ -1,5 +1,5 @@
 ﻿-- Migrasi: Tambah kolom payment ke tabel registrations
--- Jalankan di phpMyAdmin lokal (database: Budapest Vrtl Hlf Mrthn 2026) dan hosting (bayarqri_peakmiles)
+-- Jalankan di phpMyAdmin lokal (database: stridenation) dan hosting (bayarqri_peakmiles)
 
 ALTER TABLE registrations
     ADD COLUMN payment_status ENUM('unpaid', 'paid') DEFAULT 'unpaid' AFTER status,

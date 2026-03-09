@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $pageTitle = 'Kebijakan Privasi';
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -18,9 +18,9 @@ require_once __DIR__ . '/../includes/header.php';
           <h5 style="color:#fff;font-weight:700;margin:24px 0 12px;">Keamanan Data</h5>
           <p style="color:var(--gray-light);">Password disimpan dalam bentuk terenkripsi (bcrypt). Akses data dibatasi hanya untuk tim yang berwenang. Kami menerapkan langkah keamanan standar industri untuk melindungi data kamu.</p>
           <h5 style="color:#fff;font-weight:700;margin:24px 0 12px;">Hak Pengguna</h5>
-          <p style="color:var(--gray-light);">Kamu berhak untuk mengakses, memperbarui, atau menghapus data pribadimu. Hubungi kami di info@stridenation.id untuk permintaan terkait privasi.</p>
+          <p style="color:var(--gray-light);">Kamu berhak untuk mengakses, memperbarui, atau menghapus data pribadimu. Hubungi kami di info@Budapest Vrtl Hlf Mrthn 2026.id untuk permintaan terkait privasi.</p>
           <h5 style="color:#fff;font-weight:700;margin:24px 0 12px;">Kontak</h5>
-          <p style="color:var(--gray-light);">Pertanyaan terkait kebijakan privasi dapat dikirimkan ke <a href="mailto:info@stridenation.id" style="color:var(--primary);">info@stridenation.id</a></p>
+          <p style="color:var(--gray-light);">Pertanyaan terkait kebijakan privasi dapat dikirimkan ke <a href="mailto:info@Budapest Vrtl Hlf Mrthn 2026.id" style="color:var(--primary);">info@Budapest Vrtl Hlf Mrthn 2026.id</a></p>
           <p style="color:var(--gray-light);margin-top:24px;font-size:13px;">Terakhir diperbarui: Januari 2025</p>
         </div>
       </div>

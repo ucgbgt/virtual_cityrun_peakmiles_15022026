@@ -34,7 +34,7 @@ if ($isFinisher && !$certificate && $event) {
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E-Certificate — PeakMiles</title>
+<title>E-Certificate — Budapest Vrtl Hlf Mrthn 2026</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -56,7 +56,7 @@ if ($isFinisher && !$certificate && $event) {
       <div class="finisher-banner mb-4">
         <div class="finisher-title"><i class="fa fa-trophy" style="margin-right:8px;"></i>Selamat! Kamu adalah FINISHER!</div>
         <p style="color:var(--gray-light);margin-bottom:24px;">
-          E-Certificate kamu telah siap diunduh. Bagikan pencapaianmu bersama PeakMiles!
+          E-Certificate kamu telah siap diunduh. Bagikan pencapaianmu di Budapest Vrtl Hlf Mrthn 2026!
         </p>
         <div class="d-flex gap-3 justify-content-center flex-wrap">
           <a href="<?= CERT_URL . sanitize($certificate['file_path']) ?>" target="_blank" class="btn-primary-custom">

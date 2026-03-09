@@ -1,8 +1,8 @@
-<footer class="footer">
+﻿<footer class="footer">
   <div class="container">
     <div class="row g-5">
       <div class="col-lg-4">
-        <div class="footer-brand">Peak<span>Miles</span></div>
+        <div class="footer-brand">Budapest Vrtl Hlf Mrthn<span> 2026</span></div>
         <p class="footer-desc">Platform virtual run terbaik untuk kamu yang ingin berlari dari mana saja. Bergabunglah bersama ribuan pelari Indonesia!</p>
       </div>
       <div class="col-lg-2 col-6">
@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>&copy; <?= date('Y') ?> PeakMiles. All rights reserved.</span>
+      <span>&copy; <?= date('Y') ?> Budapest Vrtl Hlf Mrthn 2026. All rights reserved.</span>
       <span>Made with <i class="fa fa-heart" style="color:var(--primary)"></i> for Indonesian Runners</span>
     </div>
   </div>

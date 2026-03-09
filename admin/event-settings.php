@@ -42,7 +42,7 @@ $csrf = generateCSRFToken();
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Event Settings — PeakMiles Admin</title>
+<title>Event Settings — Budapest Vrtl Hlf Mrthn 2026 Admin</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -111,7 +111,7 @@ $csrf = generateCSRFToken();
       <input type="hidden" name="event_id" id="formEventId" value="0">
       <div class="form-group">
         <label class="form-label">Nama Event *</label>
-                <input type="text" name="name" id="formEventName" class="form-control-custom" required placeholder="PeakMiles Virtual Run 2026">
+                <input type="text" name="name" id="formEventName" class="form-control-custom" required placeholder="Budapest Vrtl Hlf Mrthn 2026">
       </div>
       <div class="form-group">
         <label class="form-label">Deskripsi</label>

@@ -31,7 +31,7 @@ $csrf          = generateCSRFToken();
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Status Pengiriman — PeakMiles</title>
+<title>Status Pengiriman — Budapest Vrtl Hlf Mrthn 2026</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -266,7 +266,7 @@ $csrf          = generateCSRFToken();
       <h3 style="color:#fff;font-weight:800;font-size:20px;margin-bottom:8px;">Konfirmasi Penerimaan Paket</h3>
       <p style="color:var(--gray-light);font-size:14px;line-height:1.7;">
         Apakah kamu benar-benar sudah menerima race pack<br>
-        <strong style="color:#fff;">(jersey &amp; medali)</strong> dari PeakMiles?
+        <strong style="color:#fff;">(jersey &amp; medali)</strong> dari Budapest Vrtl Hlf Mrthn 2026?
       </p>
     </div>
 

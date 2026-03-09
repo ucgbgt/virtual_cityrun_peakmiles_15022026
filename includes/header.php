@@ -10,7 +10,7 @@ $currentUser = isLoggedIn() ? getCurrentUser() : null;
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= isset($pageTitle) ? sanitize($pageTitle) . ' — ' : '' ?><?= SITE_NAME ?></title>
-<meta name="description" content="PeakMiles Virtual Run 5K & 10K. Lari dari mana saja, kapan saja. Daftar sekarang dan buktikan semangatmu!">
+<meta name="description" content="Budapest Vrtl Hlf Mrthn 2026 5K & 10K. Lari dari mana saja, kapan saja. Daftar sekarang dan buktikan semangatmu!">
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -32,7 +32,7 @@ $currentUser = isLoggedIn() ? getCurrentUser() : null;
 
 <nav class="navbar navbar-expand-lg">
   <div class="container">
-    <a href="<?= SITE_URL ?>/" class="navbar-brand">Peak<span>Miles</span></a>
+    <a href="<?= SITE_URL ?>/" class="navbar-brand">Budapest Vrtl Hlf Mrthn<span> 2026</span></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
       <span class="navbar-toggler-icon"></span>
     </button>

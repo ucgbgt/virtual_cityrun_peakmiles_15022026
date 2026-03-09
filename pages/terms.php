@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $pageTitle = 'Syarat & Ketentuan';
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -13,7 +13,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="form-card" style="line-height:1.9;">
           <?php
           $sections = [
-            '1. Ketentuan Umum' => 'Dengan mendaftar dan berpartisipasi dalam PeakMiles Virtual Run, peserta dianggap telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan yang berlaku.',
+            '1. Ketentuan Umum' => 'Dengan mendaftar dan berpartisipasi dalam Budapest Vrtl Hlf Mrthn 2026, peserta dianggap telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan yang berlaku.',
             '2. Pendaftaran' => 'Pendaftaran dilakukan melalui platform Nusatix.com. Peserta wajib mengisi data yang benar dan akurat. Akun peakmiles.id akan dibuat setelah verifikasi pembayaran.',
             '3. Submission Bukti Lari' => 'Peserta wajib mengupload bukti lari berupa screenshot/foto dari aplikasi lari yang menampilkan jarak dan tanggal. Bukti palsu atau manipulasi akan mengakibatkan diskualifikasi. Maksimal 3 submission per hari. Maksimal 30 km per submission.',
             '4. Verifikasi & Persetujuan' => 'Tim panitia akan mereview setiap submission dalam 1-2 hari kerja. Keputusan panitia bersifat final. Submission yang ditolak tidak akan menambah progres km.',

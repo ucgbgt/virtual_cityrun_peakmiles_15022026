@@ -57,7 +57,7 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Peserta — PeakMiles Admin</title>
+<title>Peserta — Budapest Vrtl Hlf Mrthn 2026 Admin</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -87,7 +87,7 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
     // Handle CSV export
     if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=peserta-stridenation-'.date('Ymd').'.csv');
+        header('Content-Disposition: attachment; filename=peserta-Budapest Vrtl Hlf Mrthn 2026-'.date('Ymd').'.csv');
         $out = fopen('php://output', 'w');
         fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM for Excel
         fputcsv($out, ['Nama','Email','Telepon','Kategori','Total KM','Status','Kota','Provinsi','Jersey','Status Kirim','Resi']);

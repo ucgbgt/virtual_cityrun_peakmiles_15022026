@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
 
@@ -28,5 +28,5 @@ if (!file_exists($filePath)) {
 
 // For HTML certificates, serve the file
 header('Content-Type: text/html; charset=utf-8');
-header('Content-Disposition: inline; filename="stridenation-certificate-' . $user['id'] . '.html"');
+header('Content-Disposition: inline; filename="Budapest Vrtl Hlf Mrthn 2026-certificate-' . $user['id'] . '.html"');
 readfile($filePath);

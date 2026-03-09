@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $pageTitle = 'Virtual Run 10K & 21K';
 require_once __DIR__ . '/includes/header.php';
 $event = getActiveEvent();
@@ -13,7 +13,7 @@ $event = getActiveEvent();
       <div class="col-lg-6">
         <div class="hero-badge">
           <i class="fa fa-running"></i>
-          <?= $event ? sanitize($event['name']) : 'PeakMiles Virtual Run 2026' ?>
+          <?= $event ? sanitize($event['name']) : 'Budapest Vrtl Hlf Mrthn 2026' ?>
         </div>
         <h1 class="hero-title">Run Your Way.<br><span>Anywhere.</span><br>Anytime.</h1>
         <p class="hero-desc">Ikuti virtual run 10K & 21K dari lokasi mana saja. Kumpulkan kilometer, raih status Finisher, dan dapatkan jersey + medali eksklusif!</p>
@@ -128,7 +128,7 @@ $event = getActiveEvent();
       <div class="col-lg-5">
         <span class="section-label">Cara Ikut</span>
         <h2 class="section-title">Mudah & Seru dalam 7 Langkah</h2>
-        <p style="color:var(--gray-light);font-size:15px;line-height:1.8;">Ikuti virtual run bersama PeakMiles dengan mudah. Daftar, lari, submit, dan dapatkan penghargaanmu!</p>
+        <p style="color:var(--gray-light);font-size:15px;line-height:1.8;">Ikuti virtual run Budapest Vrtl Hlf Mrthn 2026 dengan mudah. Daftar, lari, submit, dan dapatkan penghargaanmu!</p>
         <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom mt-3">
           <i class="fa fa-arrow-right"></i> Mulai Sekarang
         </a>
@@ -194,14 +194,14 @@ $event = getActiveEvent();
     <div class="text-center mb-5">
       <span class="section-label">Race Pack</span>
       <h2 class="section-title">Yang Kamu Dapatkan</h2>
-      <p class="section-desc">Setiap peserta mendapatkan paket eksklusif PeakMiles yang dikirim ke alamat pendaftaran</p>
+      <p class="section-desc">Setiap peserta mendapatkan paket eksklusif Budapest Vrtl Hlf Mrthn 2026 yang dikirim ke alamat pendaftaran</p>
     </div>
       <div class="row g-4">
       <div class="col-sm-6 col-lg-3">
         <div class="benefit-card">
           <div class="benefit-icon"><i class="fa fa-shirt"></i></div>
           <div class="benefit-title">Jersey Eksklusif</div>
-          <p class="benefit-desc">Jersey running berdesain eksklusif PeakMiles dengan material berkualitas. Tersedia dari XS hingga XXXL.</p>
+          <p class="benefit-desc">Jersey running berdesain eksklusif Budapest Vrtl Hlf Mrthn 2026 dengan material berkualitas. Tersedia dari XS hingga XXXL.</p>
         </div>
       </div>
       <div class="col-sm-6 col-lg-3">
@@ -222,7 +222,7 @@ $event = getActiveEvent();
         <div class="benefit-card">
           <div class="benefit-icon"><i class="fa fa-trophy"></i></div>
           <div class="benefit-title">Status Finisher</div>
-          <p class="benefit-desc">Banggakan pencapaianmu dengan status resmi FINISHER yang terverifikasi di platform PeakMiles.</p>
+          <p class="benefit-desc">Banggakan pencapaianmu dengan status resmi FINISHER yang terverifikasi di platform ini.</p>
         </div>
       </div>
     </div>
@@ -231,7 +231,7 @@ $event = getActiveEvent();
       <div class="row align-items-center g-4">
         <div class="col-lg-7" style="position:relative;z-index:1;">
           <h3 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:12px;">Siap untuk Berlari?</h3>
-          <p style="color:var(--gray-light);font-size:15px;margin-bottom:24px;">Daftar sekarang melalui Nusatix dan bergabunglah dengan ribuan pelari Indonesia dalam PeakMiles Virtual Run!</p>
+          <p style="color:var(--gray-light);font-size:15px;margin-bottom:24px;">Daftar sekarang melalui Nusatix dan bergabunglah dengan ribuan pelari Indonesia dalam Budapest Vrtl Hlf Mrthn 2026!</p>
           <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom">
             <i class="fa fa-external-link-alt"></i> Daftar di Nusatix.com
           </a>

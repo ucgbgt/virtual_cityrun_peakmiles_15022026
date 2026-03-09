@@ -1,5 +1,5 @@
--- Migrasi: Ubah kategori dari 5K/10K menjadi 10K/21K
--- Jalankan di phpMyAdmin lokal (database: stridenation)
+﻿-- Migrasi: Ubah kategori dari 5K/10K menjadi 10K/21K
+-- Jalankan di phpMyAdmin lokal (database: Budapest Vrtl Hlf Mrthn 2026)
 
 -- 1. Tambah kolom baru di tabel events
 ALTER TABLE events

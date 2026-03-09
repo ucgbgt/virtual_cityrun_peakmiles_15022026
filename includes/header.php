@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/functions.php';
 startSession();
 $flash = getFlash();
@@ -11,9 +11,9 @@ $currentUser = isLoggedIn() ? getCurrentUser() : null;
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= isset($pageTitle) ? sanitize($pageTitle) . ' — ' : '' ?><?= SITE_NAME ?></title>
 <meta name="description" content="PeakMiles Virtual Run 5K & 10K. Lari dari mana saja, kapan saja. Daftar sekarang dan buktikan semangatmu!">
-<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">

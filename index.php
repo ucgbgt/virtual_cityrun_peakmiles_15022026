@@ -32,7 +32,7 @@ $event = getActiveEvent();
           </div>
         </div>
         <div class="d-flex gap-3 flex-wrap">
-          <a href="<?= $event ? sanitize($event['registration_url']) : NUSATIX_URL ?>" target="_blank" class="btn-primary-custom">
+          <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom">
             <i class="fa fa-running"></i> Daftar Sekarang
           </a>
           <a href="#how-it-works" class="btn-outline-custom">
@@ -127,7 +127,7 @@ $event = getActiveEvent();
         <span class="section-label">Cara Ikut</span>
         <h2 class="section-title">Mudah & Seru dalam 7 Langkah</h2>
         <p style="color:var(--gray-light);font-size:15px;line-height:1.8;">Ikuti virtual run bersama PeakMiles dengan mudah. Daftar, lari, submit, dan dapatkan penghargaanmu!</p>
-        <a href="<?= $event ? sanitize($event['registration_url']) : NUSATIX_URL ?>" target="_blank" class="btn-primary-custom mt-3">
+        <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom mt-3">
           <i class="fa fa-arrow-right"></i> Mulai Sekarang
         </a>
       </div>
@@ -230,7 +230,7 @@ $event = getActiveEvent();
         <div class="col-lg-7" style="position:relative;z-index:1;">
           <h3 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:12px;">Siap untuk Berlari?</h3>
           <p style="color:var(--gray-light);font-size:15px;margin-bottom:24px;">Daftar sekarang melalui Nusatix dan bergabunglah dengan ribuan pelari Indonesia dalam PeakMiles Virtual Run!</p>
-          <a href="<?= $event ? sanitize($event['registration_url']) : NUSATIX_URL ?>" target="_blank" class="btn-primary-custom">
+          <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom">
             <i class="fa fa-external-link-alt"></i> Daftar di Nusatix.com
           </a>
         </div>
@@ -313,7 +313,7 @@ $event = getActiveEvent();
       Bergabunglah dengan ribuan pelari dan buktikan semangatmu. Daftar sekarang sebelum kuota habis!
     </p>
     <div class="d-flex gap-3 justify-content-center flex-wrap">
-      <a href="<?= $event ? sanitize($event['registration_url']) : NUSATIX_URL ?>" target="_blank" class="btn-primary-custom" style="font-size:17px;padding:15px 36px;">
+      <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom" style="font-size:17px;padding:15px 36px;">
         <i class="fa fa-running"></i> Daftar Sekarang
       </a>
       <a href="<?= SITE_URL ?>/login.php" class="btn-outline-custom" style="font-size:17px;padding:15px 36px;">

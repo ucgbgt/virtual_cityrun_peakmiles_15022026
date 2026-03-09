@@ -129,8 +129,8 @@ $csrf = generateCSRFToken();
       </form>
 
       <p style="text-align:center;color:var(--gray-light);font-size:14px;margin-top:28px;">
-        Belum punya akun? Daftar melalui 
-        <a href="<?= NUSATIX_URL ?>" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:none;">Nusatix.com</a>
+        Belum punya akun?
+        <a href="<?= SITE_URL ?>/register.php" style="color:var(--primary);font-weight:600;text-decoration:none;">Daftar di sini</a>
       </p>
       <p style="text-align:center;margin-top:12px;">
         <a href="<?= SITE_URL ?>/" style="color:var(--gray-light);font-size:13px;text-decoration:none;">

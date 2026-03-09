@@ -1,0 +1,298 @@
+<?php
+require_once __DIR__ . '/includes/functions.php';
+startSession();
+
+if (isLoggedIn()) {
+    redirect(SITE_URL . '/dashboard.php');
+}
+
+$error = '';
+$success = '';
+$db = getDB();
+$event = getActiveEvent();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRF($_POST['csrf_token'] ?? '')) {
+        $error = 'Token tidak valid. Silakan refresh halaman.';
+    } else {
+        $name     = trim($_POST['name'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $phone    = trim($_POST['phone'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirm  = $_POST['confirm_password'] ?? '';
+        $category = $_POST['category'] ?? '';
+
+        if (empty($name) || empty($email) || empty($phone) || empty($password) || empty($category)) {
+            $error = 'Semua field wajib diisi.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Format email tidak valid.';
+        } elseif (strlen($password) < 6) {
+            $error = 'Password minimal 6 karakter.';
+        } elseif ($password !== $confirm) {
+            $error = 'Konfirmasi password tidak cocok.';
+        } elseif (!$event) {
+            $error = 'Tidak ada event aktif saat ini.';
+        } elseif (!in_array($category, ['5K', '10K'])) {
+            $error = 'Pilihan kategori tidak valid.';
+        } else {
+            $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            if ($stmt->fetch()) {
+                $error = 'Email sudah terdaftar. Silakan login atau gunakan email lain.';
+            } else {
+                try {
+                    $db->beginTransaction();
+
+                    $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+                    $db->prepare("INSERT INTO users (name, email, phone, password_hash, role, is_active) VALUES (?, ?, ?, ?, 'user', 1)")
+                       ->execute([$name, $email, $phone, $hash]);
+                    $userId = (int)$db->lastInsertId();
+
+                    $targetKm = $category === '5K' ? (float)$event['target_5k'] : (float)$event['target_10k'];
+                    $db->prepare("INSERT INTO registrations (user_id, event_id, category, target_km) VALUES (?, ?, ?, ?)")
+                       ->execute([$userId, $event['id'], $category, $targetKm]);
+
+                    $db->commit();
+
+                    $_SESSION['user_id']   = $userId;
+                    $_SESSION['user_role'] = 'user';
+                    $_SESSION['user_name'] = $name;
+                    session_regenerate_id(true);
+
+                    flash('success', 'Selamat ' . $name . '! Pendaftaran berhasil. Selamat berlari!');
+                    redirect(SITE_URL . '/dashboard.php');
+
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    $error = 'Terjadi kesalahan. Silakan coba lagi.';
+                }
+            }
+        }
+    }
+}
+
+$csrf = generateCSRFToken();
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daftar — PeakMiles</title>
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Left panel -->
+  <div class="auth-left">
+    <div class="auth-left-bg"></div>
+    <div style="position:relative;z-index:1;text-align:center;">
+      <div style="font-size:56px;margin-bottom:24px;color:var(--primary);line-height:1;">
+        <i class="fa fa-person-running"></i>
+      </div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:16px;">
+        Bergabung di<br><span style="color:var(--primary);">PeakMiles</span>
+      </h2>
+      <?php if ($event): ?>
+      <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:20px;margin:24px auto;max-width:280px;">
+        <div style="font-size:11px;color:var(--primary);font-weight:700;letter-spacing:1px;margin-bottom:8px;">EVENT AKTIF</div>
+        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;"><?= sanitize($event['name']) ?></div>
+        <div style="font-size:12px;color:var(--gray-light);">
+          <?= date('d M Y', strtotime($event['start_date'])) ?> — <?= date('d M Y', strtotime($event['end_date'])) ?>
+        </div>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:12px;">
+          <div style="text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:var(--primary);"><?= $event['target_5k'] ?> km</div>
+            <div style="font-size:11px;color:var(--gray-light);">Kategori 5K</div>
+          </div>
+          <div style="width:1px;background:var(--border);"></div>
+          <div style="text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:var(--primary);"><?= $event['target_10k'] ?> km</div>
+            <div style="font-size:11px;color:var(--gray-light);">Kategori 10K</div>
+          </div>
+        </div>
+      </div>
+      <?php endif; ?>
+      <div style="margin-top:24px;display:flex;gap:20px;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="font-size:24px;color:var(--primary);"><i class="fa fa-file-certificate"></i></div>
+          <div style="font-size:11px;color:var(--gray-light);">E-Certificate</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;color:var(--primary);"><i class="fa fa-medal"></i></div>
+          <div style="font-size:11px;color:var(--gray-light);">Medali</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;color:var(--primary);"><i class="fa fa-tshirt"></i></div>
+          <div style="font-size:11px;color:var(--gray-light);">Jersey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right register form -->
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <a href="<?= SITE_URL ?>/" style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#fff;text-decoration:none;">
+          Peak<span style="color:var(--primary);">Miles</span>
+        </a>
+      </div>
+      <h1 class="auth-title">Daftar Sekarang</h1>
+      <p class="auth-subtitle">Isi data diri kamu untuk bergabung di event virtual run ini.</p>
+
+      <?php if (!$event): ?>
+      <div class="alert-custom alert-danger">
+        <i class="fa fa-exclamation-circle"></i> Tidak ada event aktif saat ini. Pendaftaran ditutup.
+      </div>
+      <?php else: ?>
+
+      <?php if ($error): ?>
+      <div class="alert-custom alert-danger">
+        <i class="fa fa-exclamation-circle"></i> <?= sanitize($error) ?>
+      </div>
+      <?php endif; ?>
+
+      <form method="POST" action="">
+        <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap *</label>
+          <input type="text" name="name" class="form-control-custom"
+                 placeholder="Masukkan nama lengkap"
+                 value="<?= sanitize($_POST['name'] ?? '') ?>" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" class="form-control-custom"
+                 placeholder="nama@email.com"
+                 value="<?= sanitize($_POST['email'] ?? '') ?>" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">No WhatsApp *</label>
+          <div style="position:relative;">
+            <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray-light);font-size:14px;">+62</span>
+            <input type="tel" name="phone" class="form-control-custom"
+                   placeholder="81234567890"
+                   value="<?= sanitize($_POST['phone'] ?? '') ?>"
+                   style="padding-left:48px;" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pilihan Kategori *</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+            <label style="cursor:pointer;">
+              <input type="radio" name="category" value="5K" id="cat5k"
+                     <?= (($_POST['category'] ?? '') === '5K') ? 'checked' : '' ?>
+                     style="display:none;" class="cat-radio">
+              <div class="cat-card" id="card5k">
+                <div style="font-size:22px;font-weight:800;color:var(--primary);"><?= $event['target_5k'] ?> km</div>
+                <div style="font-size:13px;font-weight:700;color:#fff;">Kategori 5K</div>
+                <div style="font-size:11px;color:var(--gray-light);margin-top:4px;">Untuk pemula</div>
+              </div>
+            </label>
+            <label style="cursor:pointer;">
+              <input type="radio" name="category" value="10K" id="cat10k"
+                     <?= (($_POST['category'] ?? '') === '10K') ? 'checked' : '' ?>
+                     style="display:none;" class="cat-radio">
+              <div class="cat-card" id="card10k">
+                <div style="font-size:22px;font-weight:800;color:var(--primary);"><?= $event['target_10k'] ?> km</div>
+                <div style="font-size:13px;font-weight:700;color:#fff;">Kategori 10K</div>
+                <div style="font-size:11px;color:var(--gray-light);margin-top:4px;">Untuk pelari aktif</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <div style="position:relative;">
+            <input type="password" name="password" id="password" class="form-control-custom"
+                   placeholder="Minimal 6 karakter" required style="padding-right:44px;">
+            <button type="button" onclick="togglePwd('password','pwd-icon')"
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-light);cursor:pointer;">
+              <i class="fa fa-eye" id="pwd-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Konfirmasi Password *</label>
+          <div style="position:relative;">
+            <input type="password" name="confirm_password" id="confirm_password" class="form-control-custom"
+                   placeholder="Ulangi password" required style="padding-right:44px;">
+            <button type="button" onclick="togglePwd('confirm_password','cpwd-icon')"
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-light);cursor:pointer;">
+              <i class="fa fa-eye" id="cpwd-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;margin-top:4px;">
+          <i class="fa fa-running"></i> Daftar Sekarang
+        </button>
+      </form>
+      <?php endif; ?>
+
+      <p style="text-align:center;color:var(--gray-light);font-size:14px;margin-top:28px;">
+        Sudah punya akun?
+        <a href="<?= SITE_URL ?>/login.php" style="color:var(--primary);font-weight:600;text-decoration:none;">Login di sini</a>
+      </p>
+      <p style="text-align:center;margin-top:12px;">
+        <a href="<?= SITE_URL ?>/" style="color:var(--gray-light);font-size:13px;text-decoration:none;">
+          <i class="fa fa-arrow-left" style="margin-right:4px;"></i> Kembali ke Landing Page
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+.cat-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s;
+  background: var(--surface);
+}
+.cat-card:hover {
+  border-color: var(--primary);
+}
+.cat-radio:checked + .cat-card {
+  border-color: var(--primary);
+  background: rgba(249,115,22,0.1);
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+}
+</style>
+
+<script>
+function togglePwd(fieldId, iconId) {
+  const inp = document.getElementById(fieldId);
+  const ico = document.getElementById(iconId);
+  if (inp.type === 'password') { inp.type = 'text'; ico.className = 'fa fa-eye-slash'; }
+  else { inp.type = 'password'; ico.className = 'fa fa-eye'; }
+}
+
+// Visual feedback for category selection
+document.querySelectorAll('.cat-radio').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.cat-card').forEach(function(card) {
+      card.style.borderColor = '';
+      card.style.background = '';
+      card.style.boxShadow = '';
+    });
+  });
+});
+</script>
+</body>
+</html>

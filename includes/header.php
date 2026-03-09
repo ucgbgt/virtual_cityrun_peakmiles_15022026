@@ -54,7 +54,7 @@ $currentUser = isLoggedIn() ? getCurrentUser() : null;
             <a href="<?= SITE_URL ?>/login.php" class="btn-outline-custom btn-sm-custom" style="margin-left:8px;">Login</a>
           </li>
           <li class="nav-item">
-            <a href="<?= NUSATIX_URL ?>" target="_blank" class="btn-primary-custom btn-sm-custom">
+            <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom btn-sm-custom">
               <i class="fa fa-running"></i> Daftar Sekarang
             </a>
           </li>

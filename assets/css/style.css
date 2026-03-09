@@ -35,7 +35,7 @@ body {
 }
 
 /* ===== TYPOGRAPHY ===== */
-h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
+h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.2; }
 .display-font { font-family: 'Saira', system-ui, sans-serif; }
 .text-primary { color: var(--primary) !important; }
 .text-muted { color: var(--gray-light) !important; }
@@ -54,7 +54,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 .navbar-brand {
   font-family: 'Saira', system-ui, sans-serif;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
   color: #fff !important;
   text-decoration: none;
 }
@@ -180,7 +180,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 .hero-title {
   font-family: 'Saira', system-ui, sans-serif;
   font-size: clamp(42px, 7vw, 82px);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.05;
   color: #fff;
   margin-bottom: 20px;
@@ -279,7 +279,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 .section-title {
   font-family: 'Saira', system-ui, sans-serif;
   font-size: clamp(28px, 4vw, 44px);
-  font-weight: 800;
+  font-weight: 600;
   color: #fff;
   margin-bottom: 16px;
 }
@@ -449,7 +449,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 .sidebar-brand a {
   font-family: 'Saira', system-ui, sans-serif;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
   color: #fff;
   text-decoration: none;
 }
@@ -528,7 +528,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
   opacity: 0.7;
 }
 .stat-card-label { font-size: 12px; color: var(--gray-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-.stat-card-value { font-size: 36px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 4px; }
+.stat-card-value { font-size: 36px; font-weight: 700; color: #fff; line-height: 1; margin-bottom: 4px; }
 .stat-card-sub { font-size: 12px; color: var(--gray-light); }
 
 /* ===== PROGRESS BAR ===== */
@@ -539,7 +539,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
   padding: 28px;
 }
 .progress-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
-.progress-km { font-size: 42px; font-weight: 800; color: var(--primary); line-height: 1; }
+.progress-km { font-size: 42px; font-weight: 700; color: var(--primary); line-height: 1; }
 .progress-target { font-size: 14px; color: var(--gray-light); }
 .progress-bar-bg {
   height: 12px;
@@ -776,7 +776,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 }
 .auth-box { width: 100%; max-width: 420px; }
 .auth-logo { margin-bottom: 40px; }
-.auth-title { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.auth-title { font-size: 28px; font-weight: 600; color: #fff; margin-bottom: 8px; }
 .auth-subtitle { font-size: 14px; color: var(--gray-light); margin-bottom: 32px; }
 
 /* ===== FINISHER BANNER ===== */
@@ -803,7 +803,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 .finisher-title {
   font-family: 'Saira', system-ui, sans-serif;
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--primary);
   margin-bottom: 8px;
 }
@@ -817,7 +817,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.2; }
 .footer-brand {
   font-family: 'Saira', system-ui, sans-serif;
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 600;
   color: #fff;
   margin-bottom: 12px;
 }

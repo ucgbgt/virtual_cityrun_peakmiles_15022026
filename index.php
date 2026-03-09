@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Virtual Run 10K & 21K';
 require_once __DIR__ . '/includes/header.php';
 $event = getActiveEvent();
@@ -13,7 +13,7 @@ $event = getActiveEvent();
       <div class="col-lg-6">
         <div class="hero-badge">
           <i class="fa fa-running"></i>
-          <?= $event ? sanitize($event['name']) : 'PeakMiles Virtual Run 2026' ?>
+          <?= $event ? sanitize($event['name']) : 'Budapest Vrtl Hlf Mrthn 2026' ?>
         </div>
         <h1 class="hero-title">Run Your Way.<br><span>Anywhere.</span><br>Anytime.</h1>
         <p class="hero-desc">Ikuti virtual run 10K & 21K dari lokasi mana saja. Kumpulkan kilometer, raih status Finisher, dan dapatkan jersey + medali eksklusif!</p>

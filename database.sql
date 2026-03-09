@@ -1,4 +1,4 @@
-﻿-- StrideNation Virtual Run Database Schema
+-- StrideNation Virtual Run Database Schema
 -- MySQL Database
 
 -- Users table
@@ -181,6 +181,6 @@ INSERT INTO users (name, email, phone, password_hash, role, is_active) VALUES
 
 -- Seed: Default active event
 INSERT INTO events (name, slug, description, start_date, end_date, target_10k, target_21k, fee_10k, fee_21k, registration_url) VALUES
-('PeakMiles Virtual Run 2026', 'peakmiles-virtual-run-2026', 
+('Budapest Vrtl Hlf Mrthn 2026', 'budapest-vrtl-hlf-mrthn-2026', 
 'Event virtual run terbesar yang bisa kamu ikuti dari mana saja! Pilih kategori 10K atau 21K dan buktikan semangatmu sebagai pelari sejati.', 
 '2026-01-01', '2026-12-31', 10.00, 21.00, 179000, 199000, 'https://nusatix.com');

@@ -10,6 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
+$selectedMethod = trim($input['paymentMethod'] ?? '');
+
+if (empty($selectedMethod)) {
+    echo json_encode(['success' => false, 'message' => 'Pilih metode pembayaran terlebih dahulu.']);
+    exit;
+}
+
 $db    = getDB();
 $user  = getCurrentUser();
 $event = getActiveEvent();
@@ -55,7 +63,7 @@ $lastName  = $nameParts[1] ?? '';
 $params = [
     'merchantCode'    => $merchantCode,
     'paymentAmount'   => $amount,
-    'paymentMethod'   => 'VC',  // VC = semua metode (Duitku pilihkan)
+    'paymentMethod'   => $selectedMethod,
     'merchantOrderId' => $merchantOrderId,
     'productDetails'  => $productDetails,
     'additionalParam' => '',

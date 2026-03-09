@@ -24,9 +24,9 @@ define('SESSION_TIMEOUT', 3600 * 8); // 8 hours
 define('ALLOWED_TYPES', ['image/jpeg', 'image/png', 'image/webp']);
 
 // Duitku Payment Gateway
-define('DUITKU_MERCHANT_CODE', 'DXXXXX');             // ganti dengan merchant code dari Duitku
+define('DUITKU_MERCHANT_CODE', 'D20995');             // ganti dengan merchant code dari Duitku
 define('DUITKU_API_KEY',       'a6ccb034e663d5f024d71070f33b231c');
-define('DUITKU_SANDBOX',       true);                 // ubah ke false untuk production
+define('DUITKU_SANDBOX',       false);                // false = production
 define('DUITKU_BASE_URL',      DUITKU_SANDBOX
     ? 'https://sandbox.duitku.com/webapi/api/merchant'
     : 'https://passport.duitku.com/webapi/api/merchant');

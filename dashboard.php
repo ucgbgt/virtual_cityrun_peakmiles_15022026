@@ -413,13 +413,14 @@ $csrf = generateCSRFToken();
       Kategori <strong style="color:var(--primary);"><?= $registration['category'] ?></strong> —
       Rp <?= number_format($registration['category'] === '21K' ? ($event['fee_21k'] ?? 199000) : ($event['fee_10k'] ?? 179000), 0, ',', '.') ?>
     </p>
-    <div id="dashPayLoading" style="display:none;padding:16px 0;">
+    <div id="dashPayLoading" style="padding:16px 0;">
       <i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i>
-      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan pembayaran...</div>
+      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Memuat metode pembayaran...</div>
     </div>
     <div id="dashPayError" style="display:none;" class="alert-custom alert-danger"></div>
-    <div id="dashPayButtons">
-      <button onclick="doPayment()" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
+    <div id="dashPayMethods" style="display:none;text-align:left;max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
+    <div id="dashPayButtons" style="display:none;">
+      <button onclick="doPayment()" id="btnDashBayar" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;" disabled>
         <i class="fa fa-credit-card"></i> Lanjut Pembayaran
       </button>
     </div>
@@ -430,19 +431,65 @@ $csrf = generateCSRFToken();
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
+let dashSelectedMethod = '';
+
 function initPayment() {
   openModal('paymentModal');
+  // Load metode pembayaran
+  fetch('<?= SITE_URL ?>/api/payment-methods.php')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('dashPayLoading').style.display = 'none';
+      if (data.success && data.methods && data.methods.length > 0) {
+        const container = document.getElementById('dashPayMethods');
+        let html = '<div style="font-size:12px;color:var(--gray-light);margin-bottom:8px;font-weight:600;">Pilih Metode:</div>';
+        data.methods.forEach(function(m) {
+          html += `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;" class="dash-pay-item">
+            <input type="radio" name="dashMethod" value="${m.paymentMethod}" style="accent-color:var(--primary);" onchange="selectDashMethod('${m.paymentMethod}',this.closest('.dash-pay-item'))">
+            <img src="${m.paymentImage}" style="width:36px;height:24px;object-fit:contain;" onerror="this.style.display='none'">
+            <div style="flex:1;"><div style="color:#fff;font-size:12px;font-weight:600;">${m.paymentName}</div></div>
+          </label>`;
+        });
+        container.innerHTML = html;
+        container.style.display = 'block';
+        document.getElementById('dashPayButtons').style.display = 'block';
+      } else {
+        const errEl = document.getElementById('dashPayError');
+        errEl.style.display = 'block';
+        errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Tidak ada metode tersedia.';
+      }
+    })
+    .catch(() => {
+      document.getElementById('dashPayLoading').style.display = 'none';
+      const errEl = document.getElementById('dashPayError');
+      errEl.style.display = 'block';
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Gagal memuat metode pembayaran.';
+    });
+}
+
+function selectDashMethod(code, el) {
+  dashSelectedMethod = code;
+  document.querySelectorAll('.dash-pay-item').forEach(function(item) {
+    item.style.borderColor = 'var(--border)';
+    item.style.background = '';
+  });
+  el.style.borderColor = 'var(--primary)';
+  el.style.background = 'rgba(249,115,22,0.08)';
+  document.getElementById('btnDashBayar').disabled = false;
 }
 
 function doPayment() {
+  if (!dashSelectedMethod) return;
+  document.getElementById('dashPayMethods').style.display = 'none';
   document.getElementById('dashPayButtons').style.display = 'none';
   document.getElementById('dashPayLoading').style.display = 'block';
+  document.getElementById('dashPayLoading').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i><div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan pembayaran...</div>';
   document.getElementById('dashPayError').style.display = 'none';
 
   fetch('<?= SITE_URL ?>/api/payment-create.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({})
+    body: JSON.stringify({ paymentMethod: dashSelectedMethod })
   })
   .then(r => r.json())
   .then(data => {
@@ -450,6 +497,7 @@ function doPayment() {
       window.location.href = data.paymentUrl;
     } else {
       document.getElementById('dashPayLoading').style.display = 'none';
+      document.getElementById('dashPayMethods').style.display = 'block';
       document.getElementById('dashPayButtons').style.display = 'block';
       const errEl = document.getElementById('dashPayError');
       errEl.style.display = 'block';
@@ -458,6 +506,7 @@ function doPayment() {
   })
   .catch(() => {
     document.getElementById('dashPayLoading').style.display = 'none';
+    document.getElementById('dashPayMethods').style.display = 'block';
     document.getElementById('dashPayButtons').style.display = 'block';
     const errEl = document.getElementById('dashPayError');
     errEl.style.display = 'block';

@@ -308,15 +308,17 @@ $csrf = generateCSRFToken();
       Akun kamu <strong style="color:var(--warning);">belum aktif</strong> sebelum melakukan pembayaran. Bayar sekarang atau nanti melalui dashboard.
     </p>
 
-    <div id="paymentLoading" style="display:none;padding:20px 0;">
+    <div id="paymentLoading" style="padding:20px 0;">
       <i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i>
-      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan halaman pembayaran...</div>
+      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Memuat metode pembayaran...</div>
     </div>
     <div id="paymentError" style="display:none;" class="alert-custom alert-danger"></div>
 
-    <div id="paymentButtons" style="display:flex;flex-direction:column;gap:12px;">
-      <button onclick="bayarSekarang()" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
-        <i class="fa fa-credit-card"></i> Bayar Sekarang — Rp <?= number_format($registeredFee, 0, ',', '.') ?>
+    <div id="paymentMethods" style="display:none;text-align:left;margin-bottom:16px;max-height:240px;overflow-y:auto;"></div>
+
+    <div id="paymentButtons" style="display:none;flex-direction:column;gap:12px;">
+      <button onclick="bayarSekarang()" id="btnBayar" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;" disabled>
+        <i class="fa fa-credit-card"></i> Lanjut Bayar — Rp <?= number_format($registeredFee, 0, ',', '.') ?>
       </button>
       <a href="<?= SITE_URL ?>/dashboard.php" class="btn-outline-custom" style="width:100%;justify-content:center;padding:14px;text-decoration:none;">
         <i class="fa fa-clock"></i> Bayar Nanti
@@ -345,15 +347,67 @@ document.querySelectorAll('.cat-radio').forEach(function(radio) {
   });
 });
 
+let selectedPaymentMethod = '';
+
+// Load payment methods saat modal tampil
+fetch('<?= SITE_URL ?>/api/payment-methods.php')
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('paymentLoading').style.display = 'none';
+    if (data.success && data.methods && data.methods.length > 0) {
+      const container = document.getElementById('paymentMethods');
+      let html = '<div style="font-size:13px;color:var(--gray-light);margin-bottom:10px;font-weight:600;">Pilih Metode Pembayaran:</div>';
+      data.methods.forEach(function(m) {
+        html += `<label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;" class="pay-method-item">
+          <input type="radio" name="payMethod" value="${m.paymentMethod}" style="accent-color:var(--primary);" onchange="selectMethod('${m.paymentMethod}',this.closest('.pay-method-item'))">
+          <img src="${m.paymentImage}" style="width:40px;height:28px;object-fit:contain;" onerror="this.style.display='none'">
+          <div style="flex:1;">
+            <div style="color:#fff;font-size:13px;font-weight:600;">${m.paymentName}</div>
+            ${m.totalFee > 0 ? `<div style="color:var(--gray-light);font-size:11px;">Biaya: Rp ${parseInt(m.totalFee).toLocaleString('id-ID')}</div>` : ''}
+          </div>
+        </label>`;
+      });
+      container.innerHTML = html;
+      container.style.display = 'block';
+      document.getElementById('paymentButtons').style.display = 'flex';
+    } else {
+      const errEl = document.getElementById('paymentError');
+      errEl.style.display = 'block';
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + (data.message || 'Tidak ada metode pembayaran tersedia.');
+      document.getElementById('paymentButtons').style.display = 'flex';
+    }
+  })
+  .catch(() => {
+    document.getElementById('paymentLoading').style.display = 'none';
+    const errEl = document.getElementById('paymentError');
+    errEl.style.display = 'block';
+    errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Gagal memuat metode pembayaran.';
+    document.getElementById('paymentButtons').style.display = 'flex';
+  });
+
+function selectMethod(code, el) {
+  selectedPaymentMethod = code;
+  document.querySelectorAll('.pay-method-item').forEach(function(item) {
+    item.style.borderColor = 'var(--border)';
+    item.style.background = '';
+  });
+  el.style.borderColor = 'var(--primary)';
+  el.style.background = 'rgba(249,115,22,0.08)';
+  document.getElementById('btnBayar').disabled = false;
+}
+
 function bayarSekarang() {
+  if (!selectedPaymentMethod) return;
+  document.getElementById('paymentMethods').style.display = 'none';
   document.getElementById('paymentButtons').style.display = 'none';
   document.getElementById('paymentLoading').style.display = 'block';
+  document.getElementById('paymentLoading').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i><div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan pembayaran...</div>';
   document.getElementById('paymentError').style.display = 'none';
 
   fetch('<?= SITE_URL ?>/api/payment-create.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({})
+    body: JSON.stringify({ paymentMethod: selectedPaymentMethod })
   })
   .then(r => r.json())
   .then(data => {
@@ -361,6 +415,7 @@ function bayarSekarang() {
       window.location.href = data.paymentUrl;
     } else {
       document.getElementById('paymentLoading').style.display = 'none';
+      document.getElementById('paymentMethods').style.display = 'block';
       document.getElementById('paymentButtons').style.display = 'flex';
       const errEl = document.getElementById('paymentError');
       errEl.style.display = 'block';
@@ -369,6 +424,7 @@ function bayarSekarang() {
   })
   .catch(() => {
     document.getElementById('paymentLoading').style.display = 'none';
+    document.getElementById('paymentMethods').style.display = 'block';
     document.getElementById('paymentButtons').style.display = 'flex';
     const errEl = document.getElementById('paymentError');
     errEl.style.display = 'block';

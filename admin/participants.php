@@ -15,6 +15,8 @@ $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 20;
 $offset = ($page - 1) * $perPage;
 
+$filterPayment = $_GET['payment'] ?? '';
+
 $where = ['1=1'];
 $params = [];
 if ($event) { $where[] = 'r.event_id = ?'; $params[] = $event['id']; }
@@ -22,6 +24,11 @@ if ($search) { $where[] = '(u.name LIKE ? OR u.email LIKE ?)'; $params[] = "%$se
 if ($filterCategory) { $where[] = 'r.category = ?'; $params[] = $filterCategory; }
 if ($filterStatus) { $where[] = 'r.status = ?'; $params[] = $filterStatus; }
 if ($filterShipping) { $where[] = 'COALESCE(s.status,"not_ready") = ?'; $params[] = $filterShipping; }
+if ($filterPayment === 'paid') {
+    $where[] = "(r.payment_status='paid' OR r.admin_activated=1)";
+} elseif ($filterPayment === 'unpaid') {
+    $where[] = "(r.payment_status='unpaid' AND (r.admin_activated IS NULL OR r.admin_activated=0))";
+}
 $whereStr = implode(' AND ', $where);
 
 $countStmt = $db->prepare("SELECT COUNT(*) FROM registrations r 
@@ -42,6 +49,8 @@ $stmt = $db->prepare("SELECT r.*, u.name, u.email, u.phone,
     WHERE $whereStr ORDER BY r.registered_at DESC LIMIT ? OFFSET ?");
 $stmt->execute(array_merge($params, [$perPage, $offset]));
 $participants = $stmt->fetchAll();
+
+$csrf = generateCSRFToken();
 $totalPages = $total ? ceil($total / $perPage) : 1;
 ?>
 <!DOCTYPE html>
@@ -102,7 +111,7 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
     <div class="page-content">
       <div class="form-card mb-4">
         <form method="GET" class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <input type="text" name="search" class="form-control-custom" placeholder="Cari nama / email..." value="<?= sanitize($search) ?>">
           </div>
           <div class="col-md-2">
@@ -120,6 +129,13 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
             </select>
           </div>
           <div class="col-md-2">
+            <select name="payment" class="form-control-custom">
+              <option value="">Status Bayar</option>
+              <option value="paid" <?= $filterPayment === 'paid' ? 'selected' : '' ?>>Aktif</option>
+              <option value="unpaid" <?= $filterPayment === 'unpaid' ? 'selected' : '' ?>>Belum Aktif</option>
+            </select>
+          </div>
+          <div class="col-md-2">
             <select name="shipping" class="form-control-custom">
               <option value="">Status Kirim</option>
               <option value="not_ready">Belum Siap</option>
@@ -128,8 +144,8 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
               <option value="delivered">Terkirim</option>
             </select>
           </div>
-          <div class="col-md-2">
-            <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;"><i class="fa fa-filter"></i> Filter</button>
+          <div class="col-md-1">
+            <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:10px 0;"><i class="fa fa-filter"></i></button>
           </div>
         </form>
       </div>
@@ -142,26 +158,29 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
                 <th>Peserta</th>
                 <th>Kategori</th>
                 <th>Progres</th>
-                <th>Status</th>
-                <th>Jersey</th>
-                <th>Kota</th>
+                <th>Status Run</th>
+                <th>Pembayaran</th>
+                <th>Jersey / Kota</th>
                 <th>Status Kirim</th>
-                <th>Daftar</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($participants as $p): 
                 $pct = $p['target_km'] > 0 ? min(100, round(($p['total_km_approved']/$p['target_km'])*100)) : 0;
                 $shippingLabels = ['not_ready'=>'Belum','preparing'=>'Disiapkan','shipped'=>'Dikirim','delivered'=>'Terkirim'];
+                $isPaid = ($p['payment_status'] ?? 'unpaid') === 'paid';
+                $isAdminActivated = !empty($p['admin_activated']);
+                $isAccountActive = $isPaid || $isAdminActivated;
               ?>
-              <tr>
+              <tr id="row-<?= $p['id'] ?>">
                 <td>
                   <div style="font-weight:600;color:#fff;"><?= sanitize($p['name']) ?></div>
                   <div style="font-size:11px;color:var(--gray-light);"><?= sanitize($p['email']) ?></div>
                   <?php if ($p['phone']): ?><div style="font-size:11px;color:var(--gray-light);"><?= sanitize($p['phone']) ?></div><?php endif; ?>
                 </td>
                 <td><span class="status-badge" style="background:rgba(249,115,22,0.1);color:var(--primary);"><?= $p['category'] ?></span></td>
-                <td style="min-width:120px;">
+                <td style="min-width:110px;">
                   <div style="font-size:12px;color:var(--gray-light);margin-bottom:4px;"><?= number_format($p['total_km_approved'],2) ?> / <?= $p['target_km'] ?> km</div>
                   <div class="progress-bar-bg" style="height:6px;">
                     <div style="height:100%;width:<?= $pct ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:100px;"></div>
@@ -169,10 +188,30 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
                   <div style="font-size:11px;color:var(--primary);margin-top:2px;"><?= $pct ?>%</div>
                 </td>
                 <td><span class="status-badge badge-<?= $p['status'] ?>"><?= $p['status'] === 'finisher' ? '<i class="fa fa-trophy" style="font-size:10px;margin-right:4px;"></i>Finisher' : 'Active' ?></span></td>
-                <td style="color:var(--gray-light);font-size:13px;"><?= $p['jersey_size'] ?: '-' ?></td>
-                <td style="color:var(--gray-light);font-size:13px;"><?= sanitize($p['city'] ?? '-') ?></td>
+                <td id="pay-badge-<?= $p['id'] ?>">
+                  <?php if ($isPaid): ?>
+                    <span class="status-badge" style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);" title="Lunas via Duitku"><i class="fa fa-check-circle" style="font-size:10px;margin-right:3px;"></i>Lunas</span>
+                  <?php elseif ($isAdminActivated): ?>
+                    <span class="status-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);" title="Diaktifkan admin: <?= sanitize($p['activation_note'] ?? '') ?>"><i class="fa fa-user-shield" style="font-size:10px;margin-right:3px;"></i>Manual</span>
+                  <?php else: ?>
+                    <span class="status-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);"><i class="fa fa-clock" style="font-size:10px;margin-right:3px;"></i>Belum Bayar</span>
+                  <?php endif; ?>
+                </td>
+                <td style="font-size:12px;color:var(--gray-light);"><?= $p['jersey_size'] ?: '-' ?><br><?= sanitize($p['city'] ?? '-') ?></td>
                 <td><span class="status-badge badge-<?= $p['shipping_status'] ?>"><?= $shippingLabels[$p['shipping_status']] ?? '-' ?></span></td>
-                <td style="font-size:12px;color:var(--gray-light);"><?= date('d M Y', strtotime($p['registered_at'])) ?></td>
+                <td>
+                  <?php if (!$isAccountActive): ?>
+                  <button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(34,197,94,0.4);color:#22c55e;"
+                    onclick="activateParticipant(<?= $p['id'] ?>, 1)">
+                    <i class="fa fa-user-check"></i> Aktifkan
+                  </button>
+                  <?php else: ?>
+                  <button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(239,68,68,0.35);color:#ef4444;"
+                    onclick="activateParticipant(<?= $p['id'] ?>, 0)" <?= $isPaid ? 'title="Sudah lunas via pembayaran"' : '' ?>>
+                    <i class="fa fa-user-times"></i> Nonaktifkan
+                  </button>
+                  <?php endif; ?>
+                </td>
               </tr>
               <?php endforeach; ?>
               <?php if (empty($participants)): ?>
@@ -195,5 +234,43 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
+<script>
+function activateParticipant(regId, activate) {
+  const action = activate ? 'aktifkan' : 'nonaktifkan';
+  let note = '';
+  if (activate) {
+    note = prompt('Catatan aktivasi (opsional, contoh: "Jalur undangan", "Transfer manual"):') ?? '';
+  } else {
+    if (!confirm('Yakin ingin nonaktifkan akun peserta ini?')) return;
+  }
+
+  const btn = document.querySelector(`#row-${regId} button`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>'; }
+
+  fetch('<?= SITE_URL ?>/api/activate-participant.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reg_id: regId, activate: activate, note: note, csrf_token: '<?= $csrf ?>' })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const badgeEl = document.getElementById(`pay-badge-${regId}`);
+      const row = document.getElementById(`row-${regId}`);
+      if (activate) {
+        badgeEl.innerHTML = '<span class="status-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);"><i class="fa fa-user-shield" style="font-size:10px;margin-right:3px;"></i>Manual</span>';
+        row.querySelector('td:last-child').innerHTML = '<button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(239,68,68,0.35);color:#ef4444;" onclick="activateParticipant(' + regId + ', 0)"><i class="fa fa-user-times"></i> Nonaktifkan</button>';
+      } else {
+        badgeEl.innerHTML = '<span class="status-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);"><i class="fa fa-clock" style="font-size:10px;margin-right:3px;"></i>Belum Bayar</span>';
+        row.querySelector('td:last-child').innerHTML = '<button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(34,197,94,0.4);color:#22c55e;" onclick="activateParticipant(' + regId + ', 1)"><i class="fa fa-user-check"></i> Aktifkan</button>';
+      }
+    } else {
+      alert('Gagal: ' + (data.message || 'Terjadi kesalahan.'));
+      location.reload();
+    }
+  })
+  .catch(() => { alert('Gagal terhubung ke server.'); location.reload(); });
+}
+</script>
 </body>
 </html>

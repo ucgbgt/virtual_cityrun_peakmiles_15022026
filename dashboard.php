@@ -13,6 +13,9 @@ if ($registration) {
     $targetKm = (float)$registration['target_km'];
     $progress = progressPercent($totalKm, $targetKm);
     $isFinisher = $registration['status'] === 'finisher';
+    $isActive = ($registration['payment_status'] ?? 'unpaid') === 'paid' || !empty($registration['admin_activated']);
+} else {
+    $isActive = false;
 }
 
 $db = getDB();
@@ -76,9 +79,13 @@ $csrf = generateCSRFToken();
           <div style="font-size:12px;color:var(--gray-light);">Selamat datang, <?= sanitize($user['name']) ?>!</div>
         </div>
       </div>
-      <?php if ($registration): ?>
+      <?php if ($registration && $isActive): ?>
       <button onclick="openModal('submitRunModal')" class="btn-primary-custom btn-sm-custom">
         <i class="fa fa-plus"></i> Submit Lari
+      </button>
+      <?php elseif ($registration && !$isActive): ?>
+      <button class="btn-primary-custom btn-sm-custom" disabled style="opacity:0.45;cursor:not-allowed;" title="Selesaikan pembayaran untuk submit lari">
+        <i class="fa fa-lock"></i> Submit Lari
       </button>
       <?php endif; ?>
     </div>
@@ -90,7 +97,7 @@ $csrf = generateCSRFToken();
         <?= sanitize($flash['message']) ?>
       </div>
       <?php endif; ?>
-      <?php if ($registration && ($registration['payment_status'] ?? 'unpaid') === 'unpaid'): ?>
+      <?php if ($registration && !$isActive): ?>
       <!-- BANNER BELUM BAYAR -->
       <div style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.06));border:1px solid rgba(239,68,68,0.35);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
         <div style="display:flex;align-items:center;gap:16px;">

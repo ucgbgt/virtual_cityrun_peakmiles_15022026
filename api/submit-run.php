@@ -42,6 +42,13 @@ if (!$reg) {
     redirect($backUrl);
 }
 
+// Cek akun aktif: harus sudah bayar ATAU diaktifkan manual oleh admin
+$isActive = ($reg['payment_status'] ?? 'unpaid') === 'paid' || !empty($reg['admin_activated']);
+if (!$isActive) {
+    flash('error', 'Akun kamu belum aktif. Selesaikan pembayaran terlebih dahulu atau hubungi admin.');
+    redirect($backUrl);
+}
+
 // Validate dates
 if (empty($runDate)) {
     flash('error', 'Tanggal lari wajib diisi.');

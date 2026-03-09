@@ -26,6 +26,9 @@ if ($event) {
 }
 $totalPages = $total ? ceil($total / $perPage) : 1;
 $totalKm = $registration ? getUserTotalKm($user['id'], $event['id']) : 0;
+$isActive = $registration
+    ? (($registration['payment_status'] ?? 'unpaid') === 'paid' || !empty($registration['admin_activated']))
+    : false;
 $csrf = generateCSRFToken();
 ?>
 <!DOCTYPE html>
@@ -47,9 +50,13 @@ $csrf = generateCSRFToken();
         <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;" class="d-lg-none"><i class="fa fa-bars"></i></button>
         <div class="topbar-title">Riwayat Lari</div>
       </div>
-      <?php if ($registration): ?>
+      <?php if ($registration && $isActive): ?>
       <button onclick="openModal('submitRunModal')" class="btn-primary-custom btn-sm-custom">
         <i class="fa fa-plus"></i> Submit Lari
+      </button>
+      <?php elseif ($registration && !$isActive): ?>
+      <button class="btn-primary-custom btn-sm-custom" disabled style="opacity:0.45;cursor:not-allowed;" title="Selesaikan pembayaran untuk submit lari">
+        <i class="fa fa-lock"></i> Submit Lari
       </button>
       <?php endif; ?>
     </div>

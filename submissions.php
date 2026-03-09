@@ -55,8 +55,8 @@ $csrf = generateCSRFToken();
         <i class="fa fa-plus"></i> Submit Lari
       </button>
       <?php elseif ($registration && !$isActive): ?>
-      <button class="btn-primary-custom btn-sm-custom" disabled style="opacity:0.45;cursor:not-allowed;" title="Selesaikan pembayaran untuk submit lari">
-        <i class="fa fa-lock"></i> Submit Lari
+      <button onclick="openModal('inactiveNoticeModal')" class="btn-primary-custom btn-sm-custom">
+        <i class="fa fa-plus"></i> Submit Lari
       </button>
       <?php endif; ?>
     </div>
@@ -157,6 +157,28 @@ $csrf = generateCSRFToken();
 </div>
 
 <!-- SUBMIT RUN MODAL -->
+<!-- INACTIVE NOTICE MODAL -->
+<div class="modal-overlay" id="inactiveNoticeModal">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <button class="modal-close" onclick="closeModal('inactiveNoticeModal')">&times;</button>
+    <div style="width:64px;height:64px;background:rgba(239,68,68,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+      <i class="fa fa-lock" style="font-size:28px;color:#ef4444;"></i>
+    </div>
+    <h3 class="modal-title" style="color:#ef4444;margin-bottom:10px;">Akun Belum Aktif</h3>
+    <p style="color:var(--gray-light);font-size:14px;line-height:1.6;margin-bottom:24px;">
+      Akun kamu belum aktif. Selesaikan pembayaran terlebih dahulu atau hubungi admin.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="closeModal('inactiveNoticeModal')" class="btn-outline-custom" style="padding:10px 20px;">
+        Tutup
+      </button>
+      <a href="<?= SITE_URL ?>/dashboard.php" class="btn-primary-custom" style="padding:10px 20px;text-decoration:none;">
+        <i class="fa fa-credit-card"></i> Bayar Sekarang
+      </a>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="submitRunModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('submitRunModal')">&times;</button>

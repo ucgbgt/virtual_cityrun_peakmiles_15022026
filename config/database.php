@@ -1,10 +1,9 @@
 <?php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'bayarqri_peakmiles');
-define('DB_USER', 'bayarqri_peakmiles');
-define('DB_PASS', '@Darsal123');
+define('DB_NAME', 'stridenation');
+define('DB_USER', 'root');
+define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
-// v2
 
 function getDB(): PDO {
     static $pdo = null;

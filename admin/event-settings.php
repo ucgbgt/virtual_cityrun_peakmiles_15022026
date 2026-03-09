@@ -15,19 +15,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $desc = trim($_POST['description'] ?? '');
     $startDate = $_POST['start_date'] ?? '';
     $endDate = $_POST['end_date'] ?? '';
-    $target5k = (float)($_POST['target_5k'] ?? 5);
     $target10k = (float)($_POST['target_10k'] ?? 10);
+    $target21k = (float)($_POST['target_21k'] ?? 21);
+    $fee10k    = (int)($_POST['fee_10k'] ?? 179000);
+    $fee21k    = (int)($_POST['fee_21k'] ?? 199000);
     $regUrl = trim($_POST['registration_url'] ?? 'https://nusatix.com');
     $isActive = isset($_POST['is_active']) ? 1 : 0;
     $slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
 
     if ($eventId) {
-        $db->prepare("UPDATE events SET name=?,slug=?,description=?,start_date=?,end_date=?,target_5k=?,target_10k=?,registration_url=?,is_active=? WHERE id=?")
-           ->execute([$name,$slug,$desc,$startDate,$endDate,$target5k,$target10k,$regUrl,$isActive,$eventId]);
+        $db->prepare("UPDATE events SET name=?,slug=?,description=?,start_date=?,end_date=?,target_10k=?,target_21k=?,fee_10k=?,fee_21k=?,registration_url=?,is_active=? WHERE id=?")
+           ->execute([$name,$slug,$desc,$startDate,$endDate,$target10k,$target21k,$fee10k,$fee21k,$regUrl,$isActive,$eventId]);
         $flash = ['type'=>'success','msg'=>'Event berhasil diperbarui!'];
     } else {
-        $db->prepare("INSERT INTO events (name,slug,description,start_date,end_date,target_5k,target_10k,registration_url,is_active) VALUES (?,?,?,?,?,?,?,?,?)")
-           ->execute([$name,$slug,$desc,$startDate,$endDate,$target5k,$target10k,$regUrl,$isActive]);
+        $db->prepare("INSERT INTO events (name,slug,description,start_date,end_date,target_10k,target_21k,fee_10k,fee_21k,registration_url,is_active) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+           ->execute([$name,$slug,$desc,$startDate,$endDate,$target10k,$target21k,$fee10k,$fee21k,$regUrl,$isActive]);
         $flash = ['type'=>'success','msg'=>'Event baru berhasil dibuat!'];
     }
     logAudit($adminUser['id'], 'update_event', 'events', $eventId ?: $db->lastInsertId());
@@ -79,7 +81,7 @@ $csrf = generateCSRFToken();
             </div>
             <div style="font-size:13px;color:var(--gray-light);">
               <?= date('d M Y', strtotime($ev['start_date'])) ?> — <?= date('d M Y', strtotime($ev['end_date'])) ?>
-              &nbsp;·&nbsp; Target 5K: <?= $ev['target_5k'] ?> km &nbsp;·&nbsp; Target 10K: <?= $ev['target_10k'] ?> km
+              &nbsp;·&nbsp; 10K: <?= $ev['target_10k'] ?> km (Rp <?= number_format($ev['fee_10k'] ?? 179000, 0, ',', '.') ?>) &nbsp;·&nbsp; 21K: <?= $ev['target_21k'] ?> km (Rp <?= number_format($ev['fee_21k'] ?? 199000, 0, ',', '.') ?>)
             </div>
           </div>
           <button onclick="editEvent(<?= htmlspecialchars(json_encode($ev)) ?>)" class="btn-outline-custom btn-sm-custom">
@@ -130,14 +132,26 @@ $csrf = generateCSRFToken();
         </div>
         <div class="col-6">
           <div class="form-group">
-            <label class="form-label">Target 5K (km)</label>
-            <input type="number" name="target_5k" id="formTarget5k" class="form-control-custom" value="5" step="0.5" min="1">
+            <label class="form-label">Target 10K (km)</label>
+            <input type="number" name="target_10k" id="formTarget10k" class="form-control-custom" value="10" step="0.5" min="1">
           </div>
         </div>
         <div class="col-6">
           <div class="form-group">
-            <label class="form-label">Target 10K (km)</label>
-            <input type="number" name="target_10k" id="formTarget10k" class="form-control-custom" value="10" step="0.5" min="1">
+            <label class="form-label">Target 21K (km)</label>
+            <input type="number" name="target_21k" id="formTarget21k" class="form-control-custom" value="21" step="0.5" min="1">
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label">Biaya 10K (Rp)</label>
+            <input type="number" name="fee_10k" id="formFee10k" class="form-control-custom" value="179000" min="0">
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label">Biaya 21K (Rp)</label>
+            <input type="number" name="fee_21k" id="formFee21k" class="form-control-custom" value="199000" min="0">
           </div>
         </div>
       </div>
@@ -166,8 +180,10 @@ function editEvent(ev) {
   document.getElementById('formEventDesc').value = ev.description || '';
   document.getElementById('formEventStart').value = ev.start_date;
   document.getElementById('formEventEnd').value = ev.end_date;
-  document.getElementById('formTarget5k').value = ev.target_5k;
   document.getElementById('formTarget10k').value = ev.target_10k;
+  document.getElementById('formTarget21k').value = ev.target_21k;
+  document.getElementById('formFee10k').value = ev.fee_10k;
+  document.getElementById('formFee21k').value = ev.fee_21k;
   document.getElementById('formRegUrl').value = ev.registration_url;
   document.getElementById('formIsActive').checked = ev.is_active == 1;
   openModal('newEventModal');

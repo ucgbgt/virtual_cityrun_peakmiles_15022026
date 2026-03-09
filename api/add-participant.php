@@ -18,7 +18,7 @@ $event     = getActiveEvent();
 
 $name     = trim($_POST['name']     ?? '');
 $email    = strtolower(trim($_POST['email'] ?? ''));
-$category = in_array($_POST['category'] ?? '', ['5K','10K']) ? $_POST['category'] : '5K';
+$category = in_array($_POST['category'] ?? '', ['10K','21K']) ? $_POST['category'] : '10K';
 $eventId  = (int)($_POST['event_id'] ?? ($event['id'] ?? 0));
 $redirect = SITE_URL . '/admin/index.php';
 
@@ -71,7 +71,7 @@ $ev         = $db->prepare("SELECT * FROM events WHERE id = ?")->execute([$event
 $evStmt     = $db->prepare("SELECT * FROM events WHERE id = ?");
 $evStmt->execute([$eventId]);
 $evData     = $evStmt->fetch();
-$targetKm   = ($category === '10K') ? ($evData['target_10k'] ?? 10) : ($evData['target_5k'] ?? 5);
+$targetKm   = ($category === '21K') ? ($evData['target_21k'] ?? 21) : ($evData['target_10k'] ?? 10);
 
 $db->prepare("INSERT INTO registrations (user_id, event_id, category, target_km) VALUES (?, ?, ?, ?)")
    ->execute([$userId, $eventId, $category, $targetKm]);

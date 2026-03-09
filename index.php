@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Virtual Run 5K & 10K';
+$pageTitle = 'Virtual Run 10K & 21K';
 require_once __DIR__ . '/includes/header.php';
 $event = getActiveEvent();
 ?>
@@ -16,7 +16,7 @@ $event = getActiveEvent();
           <?= $event ? sanitize($event['name']) : 'PeakMiles Virtual Run 2026' ?>
         </div>
         <h1 class="hero-title">Run Your Way.<br><span>Anywhere.</span><br>Anytime.</h1>
-        <p class="hero-desc">Ikuti virtual run 5K & 10K dari lokasi mana saja. Kumpulkan kilometer, raih status Finisher, dan dapatkan jersey + medali eksklusif!</p>
+        <p class="hero-desc">Ikuti virtual run 10K & 21K dari lokasi mana saja. Kumpulkan kilometer, raih status Finisher, dan dapatkan jersey + medali eksklusif!</p>
         <div class="hero-stats">
           <div class="hero-stat">
             <span class="hero-stat-val counter" data-target="2500">0</span>
@@ -27,7 +27,7 @@ $event = getActiveEvent();
             <span class="hero-stat-label">Finisher</span>
           </div>
           <div class="hero-stat">
-            <span class="hero-stat-val">5K / 10K</span>
+            <span class="hero-stat-val">10K / 21K</span>
             <span class="hero-stat-label">Kategori</span>
           </div>
         </div>
@@ -46,7 +46,7 @@ $event = getActiveEvent();
             <div class="hero-circle-inner"><i class="fa fa-person-running" style="font-size:52px;color:var(--primary);"></i></div>
             <div class="floating-card float-1">
               <div class="floating-card-title">Kategori Tersedia</div>
-              <div class="floating-card-val">5K & 10K</div>
+              <div class="floating-card-val">10K & 21K</div>
             </div>
             <div class="floating-card float-2">
               <div class="floating-card-title">Hadiah</div>
@@ -93,12 +93,14 @@ $event = getActiveEvent();
           <p style="color:var(--gray-light);font-size:14px;margin-bottom:16px;">Pilih sesuai kemampuan dan targetmu</p>
           <div style="display:flex;gap:12px;">
             <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);padding:12px 20px;border-radius:10px;text-align:center;flex:1;">
-              <div style="font-size:22px;font-weight:800;color:var(--primary);">5K</div>
-              <div style="font-size:11px;color:var(--gray-light);">5 Kilometer</div>
-            </div>
-            <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);padding:12px 20px;border-radius:10px;text-align:center;flex:1;">
               <div style="font-size:22px;font-weight:800;color:var(--primary);">10K</div>
               <div style="font-size:11px;color:var(--gray-light);">10 Kilometer</div>
+              <div style="font-size:12px;color:var(--primary);margin-top:4px;">Rp 179.000</div>
+            </div>
+            <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);padding:12px 20px;border-radius:10px;text-align:center;flex:1;">
+              <div style="font-size:22px;font-weight:800;color:var(--primary);">21K</div>
+              <div style="font-size:11px;color:var(--gray-light);">21 Kilometer</div>
+              <div style="font-size:12px;color:var(--primary);margin-top:4px;">Rp 199.000</div>
             </div>
           </div>
         </div>
@@ -136,7 +138,7 @@ $event = getActiveEvent();
           <div class="step-num">1</div>
           <div class="step-content">
             <h4>Registrasi via Nusatix</h4>
-            <p>Klik tombol "Daftar Sekarang" dan ikuti proses registrasi di nusatix.com. Pilih kategori 5K atau 10K dan lakukan pembayaran.</p>
+            <p>Klik tombol "Daftar Sekarang", isi form pendaftaran, dan pilih kategori 10K (Rp 179.000) atau 21K (Rp 199.000).</p>
           </div>
         </div>
         <div class="step-item">
@@ -270,7 +272,7 @@ $event = getActiveEvent();
             Apakah bisa lari lebih dari sekali untuk mencapai target?
             <i class="fa fa-plus faq-icon"></i>
           </button>
-          <div class="faq-answer">Ya! Kamu bisa submit bukti lari berkali-kali. Total km dari semua submission yang disetujui akan dijumlahkan. Misalnya untuk 10K, kamu bisa lari 3km, 4km, dan 3km di hari berbeda.</div>
+          <div class="faq-answer">Ya! Kamu bisa submit bukti lari berkali-kali. Total km dari semua submission yang disetujui akan dijumlahkan. Misalnya untuk 21K, kamu bisa lari 7km, 7km, dan 7km di hari berbeda.</div>
         </div>
         <div class="faq-item">
           <button class="faq-question">

@@ -108,8 +108,8 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
           <div class="col-md-2">
             <select name="category" class="form-control-custom">
               <option value="">Semua Kategori</option>
-              <option value="5K" <?= $filterCategory === '5K' ? 'selected' : '' ?>>5K</option>
               <option value="10K" <?= $filterCategory === '10K' ? 'selected' : '' ?>>10K</option>
+              <option value="21K" <?= $filterCategory === '21K' ? 'selected' : '' ?>>21K</option>
             </select>
           </div>
           <div class="col-md-2">

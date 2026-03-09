@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name     = trim($_POST['name']  ?? '');
     $email    = strtolower(trim($_POST['email'] ?? ''));
     $phone    = trim($_POST['phone'] ?? '');
-    $category = in_array($_POST['category'] ?? '', ['5K','10K']) ? $_POST['category'] : '5K';
+    $category = in_array($_POST['category'] ?? '', ['10K','21K']) ? $_POST['category'] : '10K';
     $eventId  = (int)($_POST['event_id'] ?? ($event['id'] ?? 0));
 
     $defaultPassword = 'User@123';
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($regCheck->fetch()) {
             $error = 'Peserta sudah terdaftar di event ini.';
         } else {
-            $targetKm = $category === '10K' ? ($event['target_10k'] ?? 10) : ($event['target_5k'] ?? 5);
+            $targetKm = $category === '21K' ? ($event['target_21k'] ?? 21) : ($event['target_10k'] ?? 10);
             $db->prepare("INSERT INTO registrations (user_id, event_id, category, target_km) VALUES (?, ?, ?, ?)")
                ->execute([$userId, $eventId, $category, $targetKm]);
 
@@ -144,12 +144,12 @@ $csrf = generateCSRFToken();
                 <label class="form-label">Kategori</label>
                 <div style="display:flex;gap:12px;">
                   <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 20px;border:1px solid var(--border);border-radius:var(--radius);flex:1;">
-                    <input type="radio" name="category" value="5K" checked style="accent-color:var(--primary);">
-                    <span style="color:#fff;font-weight:600;">5K</span>
+                    <input type="radio" name="category" value="10K" checked style="accent-color:var(--primary);">
+                    <span style="color:#fff;font-weight:600;">10K</span>
                   </label>
                   <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px 20px;border:1px solid var(--border);border-radius:var(--radius);flex:1;">
-                    <input type="radio" name="category" value="10K" style="accent-color:var(--primary);">
-                    <span style="color:#fff;font-weight:600;">10K</span>
+                    <input type="radio" name="category" value="21K" style="accent-color:var(--primary);">
+                    <span style="color:#fff;font-weight:600;">21K</span>
                   </label>
                 </div>
               </div>

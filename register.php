@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Konfirmasi password tidak cocok.';
         } elseif (!$event) {
             $error = 'Tidak ada event aktif saat ini.';
-        } elseif (!in_array($category, ['5K', '10K'])) {
+        } elseif (!in_array($category, ['10K', '21K'])) {
             $error = 'Pilihan kategori tidak valid.';
         } else {
             $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        ->execute([$name, $email, $phone, $hash]);
                     $userId = (int)$db->lastInsertId();
 
-                    $targetKm = $category === '5K' ? (float)$event['target_5k'] : (float)$event['target_10k'];
+                    $targetKm = $category === '10K' ? (float)$event['target_10k'] : (float)$event['target_21k'];
                     $db->prepare("INSERT INTO registrations (user_id, event_id, category, target_km) VALUES (?, ?, ?, ?)")
                        ->execute([$userId, $event['id'], $category, $targetKm]);
 
@@ -106,13 +106,15 @@ $csrf = generateCSRFToken();
         </div>
         <div style="display:flex;gap:16px;justify-content:center;margin-top:12px;">
           <div style="text-align:center;">
-            <div style="font-size:18px;font-weight:800;color:var(--primary);"><?= $event['target_5k'] ?> km</div>
-            <div style="font-size:11px;color:var(--gray-light);">Kategori 5K</div>
+            <div style="font-size:18px;font-weight:800;color:var(--primary);"><?= $event['target_10k'] ?> km</div>
+            <div style="font-size:11px;color:var(--gray-light);">Kategori 10K</div>
+            <div style="font-size:12px;color:var(--primary);margin-top:2px;">Rp 179.000</div>
           </div>
           <div style="width:1px;background:var(--border);"></div>
           <div style="text-align:center;">
-            <div style="font-size:18px;font-weight:800;color:var(--primary);"><?= $event['target_10k'] ?> km</div>
-            <div style="font-size:11px;color:var(--gray-light);">Kategori 10K</div>
+            <div style="font-size:18px;font-weight:800;color:var(--primary);"><?= $event['target_21k'] ?> km</div>
+            <div style="font-size:11px;color:var(--gray-light);">Kategori 21K</div>
+            <div style="font-size:12px;color:var(--primary);margin-top:2px;">Rp 199.000</div>
           </div>
         </div>
       </div>
@@ -191,23 +193,25 @@ $csrf = generateCSRFToken();
           <label class="form-label">Pilihan Kategori *</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
             <label style="cursor:pointer;">
-              <input type="radio" name="category" value="5K" id="cat5k"
-                     <?= (($_POST['category'] ?? '') === '5K') ? 'checked' : '' ?>
-                     style="display:none;" class="cat-radio">
-              <div class="cat-card" id="card5k">
-                <div style="font-size:22px;font-weight:800;color:var(--primary);"><?= $event['target_5k'] ?> km</div>
-                <div style="font-size:13px;font-weight:700;color:#fff;">Kategori 5K</div>
-                <div style="font-size:11px;color:var(--gray-light);margin-top:4px;">Untuk pemula</div>
-              </div>
-            </label>
-            <label style="cursor:pointer;">
               <input type="radio" name="category" value="10K" id="cat10k"
                      <?= (($_POST['category'] ?? '') === '10K') ? 'checked' : '' ?>
                      style="display:none;" class="cat-radio">
               <div class="cat-card" id="card10k">
                 <div style="font-size:22px;font-weight:800;color:var(--primary);"><?= $event['target_10k'] ?> km</div>
                 <div style="font-size:13px;font-weight:700;color:#fff;">Kategori 10K</div>
+                <div style="font-size:11px;color:var(--gray-light);margin-top:4px;">Untuk pemula</div>
+                <div style="font-size:13px;font-weight:700;color:var(--primary);margin-top:8px;">Rp <?= number_format($event['fee_10k'] ?? 179000, 0, ',', '.') ?></div>
+              </div>
+            </label>
+            <label style="cursor:pointer;">
+              <input type="radio" name="category" value="21K" id="cat21k"
+                     <?= (($_POST['category'] ?? '') === '21K') ? 'checked' : '' ?>
+                     style="display:none;" class="cat-radio">
+              <div class="cat-card" id="card21k">
+                <div style="font-size:22px;font-weight:800;color:var(--primary);"><?= $event['target_21k'] ?> km</div>
+                <div style="font-size:13px;font-weight:700;color:#fff;">Kategori 21K</div>
                 <div style="font-size:11px;color:var(--gray-light);margin-top:4px;">Untuk pelari aktif</div>
+                <div style="font-size:13px;font-weight:700;color:var(--primary);margin-top:8px;">Rp <?= number_format($event['fee_21k'] ?? 199000, 0, ',', '.') ?></div>
               </div>
             </label>
           </div>

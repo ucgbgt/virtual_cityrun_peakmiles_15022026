@@ -39,8 +39,10 @@ CREATE TABLE IF NOT EXISTS events (
     description TEXT,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    target_5k DECIMAL(5,2) DEFAULT 5.00,
     target_10k DECIMAL(5,2) DEFAULT 10.00,
+    target_21k DECIMAL(5,2) DEFAULT 21.00,
+    fee_10k INT DEFAULT 179000,
+    fee_21k INT DEFAULT 199000,
     registration_url VARCHAR(500) DEFAULT 'https://nusatix.com',
     is_active TINYINT(1) DEFAULT 1,
     banner_image VARCHAR(300) NULL,
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS registrations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     event_id INT NOT NULL,
-    category ENUM('5K', '10K') NOT NULL,
+    category ENUM('10K', '21K') NOT NULL,
     target_km DECIMAL(5,2) NOT NULL,
     total_km_approved DECIMAL(6,2) DEFAULT 0.00,
     status ENUM('active', 'finisher') DEFAULT 'active',
@@ -125,12 +127,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- Seed: Default admin user (password: Admin@123)
-INSERT INTO users (name, email, phone, password_hash, role) VALUES
-('Admin StrideNation', 'admin@stridenation.id', '08123456789', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TiHsKJlbBzwqSrG5IjBvELLe0.Wi', 'admin');
+-- Seed: Users (password: User@123)
+INSERT INTO users (name, email, phone, password_hash, role, is_active) VALUES
+('Admin PeakMiles', 'admin@stridenation.id', '08123456789', '$2y$12$JxHuqu1NP2ooNS4bhfNFnuEKrEWYh8iseS3kl/CzbaDMKeyogp1Ve', 'admin', 1),
+('Yusuf', 'yusuf@gmail.com', '', '$2y$12$JxHuqu1NP2ooNS4bhfNFnuEKrEWYh8iseS3kl/CzbaDMKeyogp1Ve', 'user', 1);
 
 -- Seed: Default active event
-INSERT INTO events (name, slug, description, start_date, end_date, target_5k, target_10k, registration_url) VALUES
-('StrideNation Virtual Run 2026', 'stridenation-virtual-run-2026', 
-'Event virtual run terbesar yang bisa kamu ikuti dari mana saja! Pilih kategori 5K atau 10K dan buktikan semangatmu sebagai pelari sejati.', 
-'2026-01-01', '2026-12-31', 5.00, 10.00, 'https://nusatix.com');
+INSERT INTO events (name, slug, description, start_date, end_date, target_10k, target_21k, fee_10k, fee_21k, registration_url) VALUES
+('PeakMiles Virtual Run 2026', 'peakmiles-virtual-run-2026', 
+'Event virtual run terbesar yang bisa kamu ikuti dari mana saja! Pilih kategori 10K atau 21K dan buktikan semangatmu sebagai pelari sejati.', 
+'2026-01-01', '2026-12-31', 10.00, 21.00, 179000, 199000, 'https://nusatix.com');

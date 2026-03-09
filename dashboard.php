@@ -90,10 +90,31 @@ $csrf = generateCSRFToken();
         <?= sanitize($flash['message']) ?>
       </div>
       <?php endif; ?>
+      <?php if ($registration && ($registration['payment_status'] ?? 'unpaid') === 'unpaid'): ?>
+      <!-- BANNER BELUM BAYAR -->
+      <div style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.06));border:1px solid rgba(239,68,68,0.35);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:44px;height:44px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa fa-lock" style="color:#ef4444;font-size:18px;"></i>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#ef4444;font-size:15px;margin-bottom:2px;">
+              <span class="status-badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);margin-right:8px;">INACTIVE</span>
+              Akun Belum Aktif
+            </div>
+            <div style="color:var(--gray-light);font-size:13px;">Belum melakukan pembayaran event. Selesaikan pembayaran untuk mulai submit lari.</div>
+          </div>
+        </div>
+        <button onclick="initPayment()" id="dashPayBtn" class="btn-primary-custom btn-sm-custom" style="flex-shrink:0;">
+          <i class="fa fa-credit-card"></i> Bayar Sekarang
+        </button>
+      </div>
+      <?php endif; ?>
+
       <?php if (!$registration && $event): ?>
       <div class="alert-custom alert-warning mb-4">
         <i class="fa fa-exclamation-triangle"></i>
-        <span>Kamu belum terdaftar di event aktif. Hubungi admin jika sudah melakukan pembayaran di Nusatix.</span>
+        <span>Kamu belum terdaftar di event aktif.</span>
       </div>
       <?php endif; ?>
 
@@ -119,9 +140,13 @@ $csrf = generateCSRFToken();
           <div>
             <div style="font-size:12px;color:var(--gray-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Progres Lari</div>
             <div class="d-flex align-items-center gap-12">
-              <span class="status-badge <?= $isFinisher ? 'badge-finisher' : 'badge-active' ?>">
-                <i class="fa fa-<?= $isFinisher ? 'trophy' : 'circle' ?>" style="font-size:8px;"></i>
-                <?= $isFinisher ? 'FINISHER' : 'ACTIVE' ?>
+              <?php
+              $paymentPaid = ($registration['payment_status'] ?? 'unpaid') === 'paid';
+              ?>
+              <span class="status-badge <?= $isFinisher ? 'badge-finisher' : ($paymentPaid ? 'badge-active' : '') ?>"
+                    style="<?= (!$isFinisher && !$paymentPaid) ? 'background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);' : '' ?>">
+                <i class="fa fa-<?= $isFinisher ? 'trophy' : ($paymentPaid ? 'circle' : 'lock') ?>" style="font-size:8px;"></i>
+                <?= $isFinisher ? 'FINISHER' : ($paymentPaid ? 'ACTIVE' : 'INACTIVE') ?>
               </span>
               <span style="color:var(--gray-light);font-size:13px;margin-left:8px;">Kategori <?= $registration['category'] ?></span>
             </div>
@@ -375,9 +400,71 @@ $csrf = generateCSRFToken();
   <img id="lightbox-img" src="" alt="">
 </div>
 
+<?php if ($registration && ($registration['payment_status'] ?? 'unpaid') === 'unpaid'): ?>
+<!-- MODAL BAYAR DARI DASHBOARD -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
+    <div style="width:60px;height:60px;background:rgba(249,115,22,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <i class="fa fa-credit-card" style="font-size:24px;color:var(--primary);"></i>
+    </div>
+    <h3 style="font-family:'Syne',sans-serif;font-weight:800;color:#fff;margin-bottom:8px;">Selesaikan Pembayaran</h3>
+    <p style="color:var(--gray-light);font-size:14px;margin-bottom:16px;">
+      Kategori <strong style="color:var(--primary);"><?= $registration['category'] ?></strong> —
+      Rp <?= number_format($registration['category'] === '21K' ? ($event['fee_21k'] ?? 199000) : ($event['fee_10k'] ?? 179000), 0, ',', '.') ?>
+    </p>
+    <div id="dashPayLoading" style="display:none;padding:16px 0;">
+      <i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i>
+      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan pembayaran...</div>
+    </div>
+    <div id="dashPayError" style="display:none;" class="alert-custom alert-danger"></div>
+    <div id="dashPayButtons">
+      <button onclick="doPayment()" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
+        <i class="fa fa-credit-card"></i> Lanjut Pembayaran
+      </button>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
+function initPayment() {
+  openModal('paymentModal');
+}
+
+function doPayment() {
+  document.getElementById('dashPayButtons').style.display = 'none';
+  document.getElementById('dashPayLoading').style.display = 'block';
+  document.getElementById('dashPayError').style.display = 'none';
+
+  fetch('<?= SITE_URL ?>/api/payment-create.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.paymentUrl) {
+      window.location.href = data.paymentUrl;
+    } else {
+      document.getElementById('dashPayLoading').style.display = 'none';
+      document.getElementById('dashPayButtons').style.display = 'block';
+      const errEl = document.getElementById('dashPayError');
+      errEl.style.display = 'block';
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + (data.message || 'Gagal membuat transaksi.');
+    }
+  })
+  .catch(() => {
+    document.getElementById('dashPayLoading').style.display = 'none';
+    document.getElementById('dashPayButtons').style.display = 'block';
+    const errEl = document.getElementById('dashPayError');
+    errEl.style.display = 'block';
+    errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Terjadi kesalahan jaringan.';
+  });
+}
+
 // Show sidebar toggle on mobile
 document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('sidebarToggle');

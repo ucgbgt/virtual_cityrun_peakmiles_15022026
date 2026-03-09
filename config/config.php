@@ -5,8 +5,9 @@ date_default_timezone_set('Asia/Jakarta');
 define('SITE_NAME', 'PeakMiles');
 $_protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $_host     = $_SERVER['HTTP_HOST'] ?? 'peakmiles.id';
-define('SITE_URL', $_protocol . '://' . $_host);
-unset($_protocol, $_host);
+$_subdir   = ($_host === 'localhost') ? '/stridenation' : '';
+define('SITE_URL', $_protocol . '://' . $_host . $_subdir);
+unset($_protocol, $_host, $_subdir);
 define('SITE_TAGLINE', 'Run Your Way. Anywhere. Anytime.');
 define('NUSATIX_URL', 'https://nusatix.com');
 
@@ -21,3 +22,11 @@ define('SESSION_TIMEOUT', 3600 * 8); // 8 hours
 
 // Allowed image types
 define('ALLOWED_TYPES', ['image/jpeg', 'image/png', 'image/webp']);
+
+// Duitku Payment Gateway
+define('DUITKU_MERCHANT_CODE', 'DXXXXX');             // ganti dengan merchant code dari Duitku
+define('DUITKU_API_KEY',       'a6ccb034e663d5f024d71070f33b231c');
+define('DUITKU_SANDBOX',       true);                 // ubah ke false untuk production
+define('DUITKU_BASE_URL',      DUITKU_SANDBOX
+    ? 'https://sandbox.duitku.com/webapi/api/merchant'
+    : 'https://passport.duitku.com/webapi/api/merchant');

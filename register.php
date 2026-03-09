@@ -59,8 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_name'] = $name;
                     session_regenerate_id(true);
 
-                    flash('success', 'Selamat ' . $name . '! Pendaftaran berhasil. Selamat berlari!');
-                    redirect(SITE_URL . '/dashboard.php');
+                    // Tampilkan modal sukses, jangan redirect dulu
+                    $showSuccessModal = true;
+                    $registeredName   = $name;
+                    $registeredCategory = $category;
+                    $registeredFee    = $category === '21K'
+                        ? ($event['fee_21k'] ?? 199000)
+                        : ($event['fee_10k'] ?? 179000);
 
                 } catch (Exception $e) {
                     $db->rollBack();
@@ -279,6 +284,48 @@ $csrf = generateCSRFToken();
 }
 </style>
 
+<?php if (!empty($showSuccessModal)): ?>
+<!-- MODAL PENDAFTARAN BERHASIL -->
+<div class="modal-overlay" id="successModal" style="display:flex;">
+  <div class="modal-box" style="max-width:480px;text-align:center;">
+    <div style="width:72px;height:72px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border:2px solid rgba(34,197,94,0.3);">
+      <i class="fa fa-check" style="font-size:32px;color:var(--success);"></i>
+    </div>
+    <h3 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;">
+      Pendaftaran Berhasil! 🎉
+    </h3>
+    <p style="color:var(--gray-light);font-size:14px;line-height:1.7;margin-bottom:4px;">
+      Selamat <strong style="color:#fff;"><?= sanitize($registeredName) ?></strong>!<br>
+      Kamu telah terdaftar di kategori <strong style="color:var(--primary);"><?= sanitize($registeredCategory) ?></strong>.
+    </p>
+    <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px;margin:16px 0;">
+      <div style="font-size:12px;color:var(--gray-light);margin-bottom:4px;">Biaya Pendaftaran</div>
+      <div style="font-size:24px;font-weight:800;color:var(--primary);">
+        Rp <?= number_format($registeredFee, 0, ',', '.') ?>
+      </div>
+    </div>
+    <p style="color:var(--gray-light);font-size:13px;margin-bottom:20px;">
+      Akun kamu <strong style="color:var(--warning);">belum aktif</strong> sebelum melakukan pembayaran. Bayar sekarang atau nanti melalui dashboard.
+    </p>
+
+    <div id="paymentLoading" style="display:none;padding:20px 0;">
+      <i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i>
+      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan halaman pembayaran...</div>
+    </div>
+    <div id="paymentError" style="display:none;" class="alert-custom alert-danger"></div>
+
+    <div id="paymentButtons" style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="bayarSekarang()" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
+        <i class="fa fa-credit-card"></i> Bayar Sekarang — Rp <?= number_format($registeredFee, 0, ',', '.') ?>
+      </button>
+      <a href="<?= SITE_URL ?>/dashboard.php" class="btn-outline-custom" style="width:100%;justify-content:center;padding:14px;text-decoration:none;">
+        <i class="fa fa-clock"></i> Bayar Nanti
+      </a>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <script>
 function togglePwd(fieldId, iconId) {
   const inp = document.getElementById(fieldId);
@@ -297,6 +344,37 @@ document.querySelectorAll('.cat-radio').forEach(function(radio) {
     });
   });
 });
+
+function bayarSekarang() {
+  document.getElementById('paymentButtons').style.display = 'none';
+  document.getElementById('paymentLoading').style.display = 'block';
+  document.getElementById('paymentError').style.display = 'none';
+
+  fetch('<?= SITE_URL ?>/api/payment-create.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.paymentUrl) {
+      window.location.href = data.paymentUrl;
+    } else {
+      document.getElementById('paymentLoading').style.display = 'none';
+      document.getElementById('paymentButtons').style.display = 'flex';
+      const errEl = document.getElementById('paymentError');
+      errEl.style.display = 'block';
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + (data.message || 'Gagal membuat transaksi.');
+    }
+  })
+  .catch(() => {
+    document.getElementById('paymentLoading').style.display = 'none';
+    document.getElementById('paymentButtons').style.display = 'flex';
+    const errEl = document.getElementById('paymentError');
+    errEl.style.display = 'block';
+    errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Terjadi kesalahan jaringan.';
+  });
+}
 </script>
 </body>
 </html>

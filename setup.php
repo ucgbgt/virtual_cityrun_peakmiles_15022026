@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * StrideNation Setup Script
  * Run this once to set up the database.
@@ -51,7 +51,7 @@ try {
     $pdo->prepare("UPDATE users SET password_hash=? WHERE email='admin@stridenation.id'")->execute([$hash]);
 
     echo '<!DOCTYPE html><html><head><title>Setup StrideNation</title>';
-    echo '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">';
+    echo '<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&display=swap" rel="stylesheet">';
     echo '<style>body{background:#0f0f0f;color:#e5e7eb;font-family:Inter,sans-serif;padding:40px;max-width:800px;margin:0 auto;}
     h1{color:#f97316;font-size:28px;margin-bottom:8px;} .ok{color:#22c55e;} .skip{color:#f59e0b;} .error{color:#ef4444;}
     .item{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;}

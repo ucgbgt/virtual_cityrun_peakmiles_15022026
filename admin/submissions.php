@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $pageTitle = 'Manajemen Submission';
 $activeNav = 'admin-submissions';
 require_once __DIR__ . '/../includes/functions.php';
@@ -46,7 +46,7 @@ $csrf = generateCSRFToken();
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ── Checkbox custom ── */
 .cb-custom {

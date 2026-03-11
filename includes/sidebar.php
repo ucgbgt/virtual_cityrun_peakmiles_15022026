@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/functions.php';
 requireLogin();
 $currentUser = getCurrentUser();
@@ -11,47 +11,47 @@ $activeNav = $activeNav ?? '';
   <nav class="sidebar-nav">
     <?php if (isAdmin()): ?>
       <div class="sidebar-label">Admin Panel</div>
-      <a href="<?= SITE_URL ?>/admin/index.php" class="sidebar-link <?= $activeNav === 'admin-dashboard' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin" class="sidebar-link <?= $activeNav === 'admin-dashboard' ? 'active' : '' ?>">
         <i class="fa fa-chart-pie"></i> Dashboard
       </a>
-      <a href="<?= SITE_URL ?>/admin/participants.php" class="sidebar-link <?= $activeNav === 'admin-participants' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin/participants" class="sidebar-link <?= $activeNav === 'admin-participants' ? 'active' : '' ?>">
         <i class="fa fa-users"></i> Peserta
       </a>
-      <a href="<?= SITE_URL ?>/admin/submissions.php" class="sidebar-link <?= $activeNav === 'admin-submissions' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin/submissions" class="sidebar-link <?= $activeNav === 'admin-submissions' ? 'active' : '' ?>">
         <i class="fa fa-file-upload"></i> Submission
       </a>
-      <a href="<?= SITE_URL ?>/admin/shipping.php" class="sidebar-link <?= $activeNav === 'admin-shipping' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin/shipping" class="sidebar-link <?= $activeNav === 'admin-shipping' ? 'active' : '' ?>">
         <i class="fa fa-shipping-fast"></i> Pengiriman
       </a>
-      <a href="<?= SITE_URL ?>/admin/event-settings.php" class="sidebar-link <?= $activeNav === 'admin-event' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin/event-settings" class="sidebar-link <?= $activeNav === 'admin-event' ? 'active' : '' ?>">
         <i class="fa fa-cog"></i> Event Settings
       </a>
-      <a href="<?= SITE_URL ?>/admin/payment-settings.php" class="sidebar-link <?= $activeNav === 'admin-payment' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin/payment-settings" class="sidebar-link <?= $activeNav === 'admin-payment' ? 'active' : '' ?>">
         <i class="fa fa-credit-card"></i> Metode Pembayaran
       </a>
-      <a href="<?= SITE_URL ?>/admin/admins.php" class="sidebar-link <?= $activeNav === 'admin-admins' ? 'active' : '' ?>">
+      <a href="<?= SITE_URL ?>/admin/admins" class="sidebar-link <?= $activeNav === 'admin-admins' ? 'active' : '' ?>">
         <i class="fa fa-user-shield"></i> Manajemen Admin
       </a>
       <div class="sidebar-label" style="margin-top:16px;">User View</div>
     <?php endif; ?>
 
-    <a href="<?= SITE_URL ?>/dashboard.php" class="sidebar-link <?= $activeNav === 'dashboard' ? 'active' : '' ?>">
+    <a href="<?= SITE_URL ?>/dashboard" class="sidebar-link <?= $activeNav === 'dashboard' ? 'active' : '' ?>">
       <i class="fa fa-th-large"></i> Dashboard
     </a>
-    <a href="<?= SITE_URL ?>/submissions.php" class="sidebar-link <?= $activeNav === 'submissions' ? 'active' : '' ?>">
+    <a href="<?= SITE_URL ?>/submissions" class="sidebar-link <?= $activeNav === 'submissions' ? 'active' : '' ?>">
       <i class="fa fa-list-check"></i> Riwayat Lari
     </a>
-    <a href="<?= SITE_URL ?>/shipping.php" class="sidebar-link <?= $activeNav === 'shipping' ? 'active' : '' ?>">
+    <a href="<?= SITE_URL ?>/shipping" class="sidebar-link <?= $activeNav === 'shipping' ? 'active' : '' ?>">
       <i class="fa fa-box"></i> Status Pengiriman
     </a>
-    <a href="<?= SITE_URL ?>/certificate.php" class="sidebar-link <?= $activeNav === 'certificate' ? 'active' : '' ?>">
+    <a href="<?= SITE_URL ?>/certificate" class="sidebar-link <?= $activeNav === 'certificate' ? 'active' : '' ?>">
       <i class="fa fa-certificate"></i> E-Certificate
     </a>
     <div class="sidebar-label" style="margin-top:16px;">Akun</div>
-    <a href="<?= SITE_URL ?>/profile.php" class="sidebar-link <?= $activeNav === 'profile' ? 'active' : '' ?>">
+    <a href="<?= SITE_URL ?>/profile" class="sidebar-link <?= $activeNav === 'profile' ? 'active' : '' ?>">
       <i class="fa fa-user"></i> Profil
     </a>
-    <a href="<?= SITE_URL ?>/logout.php" class="sidebar-link" style="color:rgba(239,68,68,0.8);">
+    <a href="<?= SITE_URL ?>/logout" class="sidebar-link" style="color:rgba(239,68,68,0.8);">
       <i class="fa fa-sign-out-alt"></i> Keluar
     </a>
   </nav>

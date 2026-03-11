@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Pengaturan Pembayaran';
 $activeNav = 'admin-payment';
 require_once __DIR__ . '/../includes/functions.php';
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     flash('success', 'Pengaturan metode pembayaran berhasil disimpan.');
-    redirect(SITE_URL . '/admin/payment-settings.php');
+    redirect(SITE_URL . '/admin/payment-settings');
 }
 
 // Ambil semua metode, grouped by category

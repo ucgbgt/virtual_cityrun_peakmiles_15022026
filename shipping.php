@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Status Pengiriman';
 $activeNav = 'shipping';
 require_once __DIR__ . '/includes/functions.php';
@@ -224,7 +224,7 @@ $csrf          = generateCSRFToken();
               <i class="fa fa-exclamation-triangle" style="margin-right:6px;"></i>
               Alamat belum diisi. Lengkapi profil untuk memastikan pengiriman tepat sasaran.
             </div>
-            <a href="<?= SITE_URL ?>/profile.php" class="btn-primary-custom btn-sm-custom mt-3">
+            <a href="<?= SITE_URL ?>/profile" class="btn-primary-custom btn-sm-custom mt-3">
               <i class="fa fa-edit"></i> Lengkapi Profil
             </a>
             <?php endif; ?>

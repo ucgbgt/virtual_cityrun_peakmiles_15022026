@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/includes/functions.php';
 startSession();
-if (isLoggedIn()) redirect(SITE_URL . '/dashboard.php');
+if (isLoggedIn()) redirect(SITE_URL . '/dashboard');
 
 $message = '';
 $messageType = '';
@@ -90,7 +90,7 @@ $csrf = generateCSRFToken();
         </button>
       </form>
       <p style="text-align:center;margin-top:24px;">
-        <a href="<?= SITE_URL ?>/login.php" style="color:var(--primary);font-size:14px;text-decoration:none;">
+        <a href="<?= SITE_URL ?>/login" style="color:var(--primary);font-size:14px;text-decoration:none;">
           <i class="fa fa-arrow-left" style="margin-right:4px;"></i> Kembali ke Login
         </a>
       </p>

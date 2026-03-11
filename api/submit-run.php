@@ -4,7 +4,7 @@ startSession();
 requireLogin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect(SITE_URL . '/dashboard.php');
+    redirect(SITE_URL . '/dashboard');
 }
 
 // Tentukan halaman tujuan redirect (dashboard atau submissions)

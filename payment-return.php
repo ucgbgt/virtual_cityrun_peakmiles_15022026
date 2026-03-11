@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/includes/functions.php';
 startSession();
 requireLogin();
@@ -56,7 +56,7 @@ if ($resultCode === '00' && !$paymentPaid && $merchantOrderId) {
       <div style="font-size:14px;font-weight:600;color:#fff;"><?= sanitize($reference) ?></div>
     </div>
     <?php endif; ?>
-    <a href="<?= SITE_URL ?>/dashboard.php" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;margin-top:8px;">
+    <a href="<?= SITE_URL ?>/dashboard" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;margin-top:8px;">
       <i class="fa fa-running"></i> Ke Dashboard
     </a>
 
@@ -69,7 +69,7 @@ if ($resultCode === '00' && !$paymentPaid && $merchantOrderId) {
     <p style="color:var(--gray-light);font-size:15px;line-height:1.7;margin-bottom:20px;">
       Pembayaran sedang diproses. Akun akan aktif otomatis setelah pembayaran dikonfirmasi.
     </p>
-    <a href="<?= SITE_URL ?>/dashboard.php" class="btn-outline-custom" style="width:100%;justify-content:center;padding:14px;">
+    <a href="<?= SITE_URL ?>/dashboard" class="btn-outline-custom" style="width:100%;justify-content:center;padding:14px;">
       <i class="fa fa-home"></i> Ke Dashboard
     </a>
 
@@ -82,7 +82,7 @@ if ($resultCode === '00' && !$paymentPaid && $merchantOrderId) {
     <p style="color:var(--gray-light);font-size:15px;line-height:1.7;margin-bottom:20px;">
       Pembayaran tidak diselesaikan. Akun kamu sudah terdaftar, kamu bisa bayar kapan saja dari dashboard.
     </p>
-    <a href="<?= SITE_URL ?>/dashboard.php" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
+    <a href="<?= SITE_URL ?>/dashboard" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
       <i class="fa fa-credit-card"></i> Bayar di Dashboard
     </a>
     <?php endif; ?>

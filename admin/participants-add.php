@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Tambah Peserta';
 $activeNav = 'admin-participants';
 require_once __DIR__ . '/../includes/functions.php';
@@ -91,7 +91,7 @@ $csrf = generateCSRFToken();
         <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;" class="d-lg-none"><i class="fa fa-bars"></i></button>
         <div class="topbar-title">Tambah Peserta Baru</div>
       </div>
-      <a href="<?= SITE_URL ?>/admin/participants.php" class="btn-outline-custom btn-sm-custom">
+      <a href="<?= SITE_URL ?>/admin/participants" class="btn-outline-custom btn-sm-custom">
         <i class="fa fa-arrow-left"></i> Kembali
       </a>
     </div>

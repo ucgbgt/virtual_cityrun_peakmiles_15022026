@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../config/google.php';
 startSession();
 
 if (isLoggedIn()) {
-    redirect(SITE_URL . '/dashboard.php');
+    redirect(SITE_URL . '/dashboard');
 }
 
 // Buat state token untuk proteksi CSRF

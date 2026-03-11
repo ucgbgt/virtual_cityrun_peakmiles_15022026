@@ -4,25 +4,25 @@ require_once __DIR__ . '/../../config/google.php';
 startSession();
 
 if (isLoggedIn()) {
-    redirect(SITE_URL . '/dashboard.php');
+    redirect(SITE_URL . '/dashboard');
 }
 
 // Jika user membatalkan
 if (isset($_GET['error'])) {
     flash('error', 'Login dengan Google dibatalkan.');
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/login');
 }
 
 // Validasi state (CSRF protection)
 if (!isset($_GET['state']) || $_GET['state'] !== ($_SESSION['google_oauth_state'] ?? '')) {
     flash('error', 'Permintaan tidak valid. Silakan coba lagi.');
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/login');
 }
 unset($_SESSION['google_oauth_state']);
 
 if (empty($_GET['code'])) {
     flash('error', 'Kode otorisasi Google tidak ditemukan.');
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/login');
 }
 
 // Tukar code → access token
@@ -31,7 +31,7 @@ $tokenData = googleFetchToken($_GET['code']);
 if (empty($tokenData['access_token'])) {
     $errMsg = $tokenData['error_description'] ?? ($tokenData['error'] ?? 'Unknown error');
     flash('error', 'Gagal mendapatkan token Google: ' . $errMsg);
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/login');
 }
 
 // Ambil profil user dari Google
@@ -39,7 +39,7 @@ $gUser = googleGetUserInfo($tokenData['access_token']);
 
 if (empty($gUser['email'])) {
     flash('error', 'Tidak bisa mendapatkan email dari akun Google.');
-    redirect(SITE_URL . '/login.php');
+    redirect(SITE_URL . '/login');
 }
 
 $googleId = $gUser['id']    ?? '';
@@ -84,7 +84,7 @@ if ($user) {
     // User sudah ada
     if (!$user['is_active']) {
         flash('error', 'Akun kamu dinonaktifkan. Hubungi admin.');
-        redirect(SITE_URL . '/login.php');
+        redirect(SITE_URL . '/login');
     }
     // Tautkan google_id jika belum ada
     if ($hasGoogleIdCol && !$user['google_id'] && $googleId) {
@@ -118,4 +118,4 @@ $_SESSION['user_name'] = $user['name'];
 session_regenerate_id(true);
 
 // Login via Google selalu diarahkan ke dashboard user, bukan admin
-redirect(SITE_URL . '/dashboard.php');
+redirect(SITE_URL . '/dashboard');

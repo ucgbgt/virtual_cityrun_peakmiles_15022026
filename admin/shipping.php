@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Manajemen Pengiriman';
 $activeNav = 'admin-shipping';
 require_once __DIR__ . '/../includes/functions.php';
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_shipping'])) {
     }
     logAudit($adminUser['id'], 'update_shipping', 'shipping', $userId);
     flash('success', 'Status pengiriman berhasil diperbarui.');
-    redirect(SITE_URL . '/admin/shipping.php');
+    redirect(SITE_URL . '/admin/shipping');
 }
 
 $filterStatus = $_GET['status'] ?? '';

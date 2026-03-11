@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'E-Certificate';
 $activeNav = 'certificate';
 require_once __DIR__ . '/includes/functions.php';
@@ -136,7 +136,7 @@ if ($isFinisher && !$certificate && $event) {
               </div>
             </div>
             <?php endif; ?>
-            <a href="<?= SITE_URL ?>/dashboard.php" class="btn-primary-custom">
+            <a href="<?= SITE_URL ?>/dashboard" class="btn-primary-custom">
               <i class="fa fa-running"></i> Lanjut Berlari
             </a>
           </div>

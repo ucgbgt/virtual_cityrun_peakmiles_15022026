@@ -14,9 +14,9 @@
       </div>
       <div class="col-lg-2 col-6">
         <div class="footer-heading">Info</div>
-        <a href="<?= SITE_URL ?>/pages/contact.php" class="footer-link">Kontak</a>
-        <a href="<?= SITE_URL ?>/pages/terms.php" class="footer-link">Syarat & Ketentuan</a>
-        <a href="<?= SITE_URL ?>/pages/privacy.php" class="footer-link">Privasi</a>
+        <a href="<?= SITE_URL ?>/pages/contact" class="footer-link">Kontak</a>
+        <a href="<?= SITE_URL ?>/pages/terms" class="footer-link">Syarat & Ketentuan</a>
+        <a href="<?= SITE_URL ?>/pages/privacy" class="footer-link">Privasi</a>
       </div>
       <div class="col-lg-4">
         <div class="footer-heading">Ikuti Kami</div>

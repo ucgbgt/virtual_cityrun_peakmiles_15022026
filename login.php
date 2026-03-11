@@ -3,7 +3,7 @@ require_once __DIR__ . '/includes/functions.php';
 startSession();
 
 if (isLoggedIn()) {
-    redirect(SITE_URL . '/dashboard.php');
+    redirect(SITE_URL . '/dashboard');
 }
 
 $error = '';
@@ -114,7 +114,7 @@ $csrf = generateCSRFToken();
         <div class="form-group">
           <label class="form-label" style="display:flex;justify-content:space-between;">
             Password
-            <a href="<?= SITE_URL ?>/forgot-password.php" style="color:var(--primary);font-weight:500;text-decoration:none;font-size:12px;">Lupa Password?</a>
+            <a href="<?= SITE_URL ?>/forgot-password" style="color:var(--primary);font-weight:500;text-decoration:none;font-size:12px;">Lupa Password?</a>
           </label>
           <div style="position:relative;">
             <input type="password" name="password" id="password" class="form-control-custom" placeholder="Masukkan password" required style="padding-right:44px;">
@@ -134,7 +134,7 @@ $csrf = generateCSRFToken();
         <div style="flex:1;height:1px;background:var(--border);"></div>
       </div>
 
-      <a href="<?= SITE_URL ?>/auth/google/redirect.php"
+          <a href="<?= SITE_URL ?>/auth/google/redirect"
          style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border:1px solid var(--border);border-radius:10px;background:var(--dark-3);color:#fff;text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s;"
          onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.background='var(--dark-4)'"
          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--dark-3)'">
@@ -149,7 +149,7 @@ $csrf = generateCSRFToken();
 
       <p style="text-align:center;color:var(--gray-light);font-size:14px;margin-top:24px;">
         Belum punya akun?
-        <a href="<?= SITE_URL ?>/register.php" style="color:var(--primary);font-weight:600;text-decoration:none;">Daftar di sini</a>
+        <a href="<?= SITE_URL ?>/register" style="color:var(--primary);font-weight:600;text-decoration:none;">Daftar di sini</a>
       </p>
       <p style="text-align:center;margin-top:12px;">
         <a href="<?= SITE_URL ?>/" style="color:var(--gray-light);font-size:13px;text-decoration:none;">

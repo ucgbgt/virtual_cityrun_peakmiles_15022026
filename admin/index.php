@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Admin Dashboard';
 $activeNav = 'admin-dashboard';
 require_once __DIR__ . '/../includes/functions.php';
@@ -53,7 +53,7 @@ $csrf   = generateCSRFToken();
         <button onclick="openModal('addParticipantModal')" class="btn-outline-custom btn-sm-custom">
           <i class="fa fa-user-plus"></i> Tambah Peserta
         </button>
-        <a href="<?= SITE_URL ?>/admin/submissions.php" class="btn-primary-custom btn-sm-custom">
+        <a href="<?= SITE_URL ?>/admin/submissions" class="btn-primary-custom btn-sm-custom">
           <i class="fa fa-clock"></i> <?= $pendingSubs ?> Pending
         </a>
       </div>
@@ -107,7 +107,7 @@ $csrf   = generateCSRFToken();
       <div class="form-card mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div style="font-weight:700;color:#fff;"><i class="fa fa-chart-bar" style="color:var(--primary);margin-right:8px;"></i>Status Submission</div>
-          <a href="<?= SITE_URL ?>/admin/submissions.php" style="font-size:13px;color:var(--primary);text-decoration:none;">Lihat Semua →</a>
+          <a href="<?= SITE_URL ?>/admin/submissions" style="font-size:13px;color:var(--primary);text-decoration:none;">Lihat Semua →</a>
         </div>
         <?php $totalSubs = $approvedSubs + $rejectedSubs + $pendingSubs; ?>
         <div class="row g-3 text-center">
@@ -137,7 +137,7 @@ $csrf   = generateCSRFToken();
           <div class="table-container">
             <div class="table-header">
               <div class="table-title"><i class="fa fa-clock" style="color:var(--warning);margin-right:6px;"></i>Submission Pending</div>
-              <a href="<?= SITE_URL ?>/admin/submissions.php" style="font-size:13px;color:var(--primary);text-decoration:none;">Semua →</a>
+              <a href="<?= SITE_URL ?>/admin/submissions" style="font-size:13px;color:var(--primary);text-decoration:none;">Semua →</a>
             </div>
             <?php if (empty($recentPending)): ?>
             <div style="padding:40px;text-align:center;color:var(--gray-light);">

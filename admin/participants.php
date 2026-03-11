@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Peserta';
 $activeNav = 'admin-participants';
 require_once __DIR__ . '/../includes/functions.php';
@@ -73,7 +73,7 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
         <div class="topbar-title">Daftar Peserta (<?= $total ?>)</div>
       </div>
       <div class="d-flex gap-2">
-        <a href="<?= SITE_URL ?>/admin/participants-add.php" class="btn-primary-custom btn-sm-custom">
+        <a href="<?= SITE_URL ?>/admin/participants-add" class="btn-primary-custom btn-sm-custom">
           <i class="fa fa-user-plus"></i> Tambah Peserta
         </a>
         <a href="?export=csv&search=<?= urlencode($search) ?>&category=<?= urlencode($filterCategory) ?>&status=<?= urlencode($filterStatus) ?>" 

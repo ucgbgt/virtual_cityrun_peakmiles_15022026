@@ -4,12 +4,12 @@ startSession();
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect(SITE_URL . '/admin/submissions.php');
+    redirect(SITE_URL . '/admin/submissions');
 }
 
 if (!validateCSRF($_POST['csrf_token'] ?? '')) {
     flash('error', 'Token tidak valid.');
-    redirect(SITE_URL . '/admin/submissions.php');
+    redirect(SITE_URL . '/admin/submissions');
 }
 
 $adminUser = getCurrentUser();

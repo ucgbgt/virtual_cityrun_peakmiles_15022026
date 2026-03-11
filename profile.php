@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Profil';
 $activeNav = 'profile';
 require_once __DIR__ . '/includes/functions.php';
@@ -206,7 +206,7 @@ $provinces = ['Aceh','Bali','Banten','Bengkulu','DI Yogyakarta','DKI Jakarta','G
                 <button type="submit" class="btn-primary-custom">
                   <i class="fa fa-save"></i> Simpan Perubahan
                 </button>
-                <a href="<?= SITE_URL ?>/dashboard.php" class="btn-outline-custom">Batal</a>
+                <a href="<?= SITE_URL ?>/dashboard" class="btn-outline-custom">Batal</a>
               </div>
             </div>
           </div>

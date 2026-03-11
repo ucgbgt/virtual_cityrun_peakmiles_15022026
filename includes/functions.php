@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Tampilkan semua error — nonaktifkan setelah masalah selesai
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -31,7 +31,7 @@ function isAdmin(): bool {
 
 function requireLogin(): void {
     if (!isLoggedIn()) {
-        header('Location: ' . SITE_URL . '/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+        header('Location: ' . SITE_URL . '/login?redirect=' . urlencode($_SERVER['REQUEST_URI']));
         exit;
     }
 }
@@ -39,7 +39,7 @@ function requireLogin(): void {
 function requireAdmin(): void {
     requireLogin();
     if (!isAdmin()) {
-        header('Location: ' . SITE_URL . '/dashboard.php');
+        header('Location: ' . SITE_URL . '/dashboard');
         exit;
     }
 }

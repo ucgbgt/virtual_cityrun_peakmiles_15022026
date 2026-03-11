@@ -1,5 +1,12 @@
 Options -Indexes
 
+# Clean URLs - rewrite extensionless requests to .php files
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+
 # PHP upload settings
 php_value upload_max_filesize 10M
 php_value post_max_size 12M

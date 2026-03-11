@@ -4,12 +4,12 @@ startSession();
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect(SITE_URL . '/admin/index.php');
+    redirect(SITE_URL . '/admin');
 }
 
 if (!validateCSRF($_POST['csrf_token'] ?? '')) {
     flash('error', 'Token tidak valid. Silakan refresh halaman.');
-    redirect(SITE_URL . '/admin/index.php');
+    redirect(SITE_URL . '/admin');
 }
 
 $db        = getDB();

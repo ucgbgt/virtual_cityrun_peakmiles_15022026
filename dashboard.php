@@ -143,7 +143,7 @@ $csrf = generateCSRFToken();
         <p style="color:var(--gray-light);margin-bottom:20px;">Kamu telah berhasil menyelesaikan target <?= $registration['category'] ?> dengan total <?= formatKm($totalKm) ?>. Luar biasa!</p>
         <div class="d-flex gap-3 justify-content-center flex-wrap">
           <?php if ($certificate): ?>
-          <a href="<?= SITE_URL ?>/certificate.php" class="btn-primary-custom">
+          <a href="<?= SITE_URL ?>/certificate" class="btn-primary-custom">
             <i class="fa fa-download"></i> Download E-Certificate
           </a>
           <?php endif; ?>
@@ -246,7 +246,7 @@ $csrf = generateCSRFToken();
           <div class="table-container">
             <div class="table-header">
               <div class="table-title">Riwayat Submission Terbaru</div>
-              <a href="<?= SITE_URL ?>/submissions.php" style="font-size:13px;color:var(--primary);text-decoration:none;">
+              <a href="<?= SITE_URL ?>/submissions" style="font-size:13px;color:var(--primary);text-decoration:none;">
                 Lihat Semua <i class="fa fa-arrow-right"></i>
               </a>
             </div>
@@ -329,7 +329,7 @@ $csrf = generateCSRFToken();
             <?php else: ?>
             <div style="color:var(--gray-light);font-size:13px;">Race pack akan dikirim setelah event selesai.</div>
             <?php endif; ?>
-            <a href="<?= SITE_URL ?>/shipping.php" class="btn-outline-custom btn-sm-custom" style="margin-top:16px;width:100%;justify-content:center;">
+            <a href="<?= SITE_URL ?>/shipping" class="btn-outline-custom btn-sm-custom" style="margin-top:16px;width:100%;justify-content:center;">
               Detail Pengiriman
             </a>
           </div>
@@ -355,7 +355,7 @@ $csrf = generateCSRFToken();
               <i class="fa fa-exclamation-triangle"></i> Lengkapi profil untuk memastikan pengiriman race pack tepat sasaran.
             </div>
             <?php endif; ?>
-            <a href="<?= SITE_URL ?>/profile.php" class="btn-outline-custom btn-sm-custom" style="width:100%;justify-content:center;">
+            <a href="<?= SITE_URL ?>/profile" class="btn-outline-custom btn-sm-custom" style="width:100%;justify-content:center;">
               <i class="fa fa-edit"></i> <?= $profilePct < 100 ? 'Lengkapi Profil' : 'Edit Profil' ?>
             </a>
           </div>

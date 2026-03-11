@@ -42,19 +42,19 @@ $currentUser = isLoggedIn() ? getCurrentUser() : null;
         <li class="nav-item"><a href="<?= SITE_URL ?>/#how-it-works" class="nav-link">Cara Ikut</a></li>
         <li class="nav-item"><a href="<?= SITE_URL ?>/#race-pack" class="nav-link">Race Pack</a></li>
         <li class="nav-item"><a href="<?= SITE_URL ?>/#faq" class="nav-link">FAQ</a></li>
-        <li class="nav-item"><a href="<?= SITE_URL ?>/pages/contact.php" class="nav-link">Kontak</a></li>
+        <li class="nav-item"><a href="<?= SITE_URL ?>/pages/contact" class="nav-link">Kontak</a></li>
         <?php if (isLoggedIn()): ?>
           <li class="nav-item">
-            <a href="<?= SITE_URL ?>/dashboard.php" class="btn-primary-custom btn-sm-custom" style="margin-left:8px;">
+            <a href="<?= SITE_URL ?>/dashboard" class="btn-primary-custom btn-sm-custom" style="margin-left:8px;">
               <i class="fa fa-th-large"></i> Dashboard
             </a>
           </li>
         <?php else: ?>
           <li class="nav-item">
-            <a href="<?= SITE_URL ?>/login.php" class="btn-outline-custom btn-sm-custom" style="margin-left:8px;">Login</a>
+            <a href="<?= SITE_URL ?>/login" class="btn-outline-custom btn-sm-custom" style="margin-left:8px;">Login</a>
           </li>
           <li class="nav-item">
-            <a href="<?= SITE_URL ?>/register.php" class="btn-primary-custom btn-sm-custom">
+            <a href="<?= SITE_URL ?>/register" class="btn-primary-custom btn-sm-custom">
               <i class="fa fa-running"></i> Daftar Sekarang
             </a>
           </li>

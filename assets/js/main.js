@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Mobile sidebar toggle with overlay
   const sidebarToggle = document.getElementById('sidebarToggle');
-  const sidebar = document.getElementById('sidebar');
+  const sidebar      = document.getElementById('sidebar');
   if (sidebarToggle && sidebar) {
-    // Create overlay element
+    // Ensure overlay exists once
     let overlay = document.getElementById('sidebarOverlay');
     if (!overlay) {
       overlay = document.createElement('div');
@@ -52,25 +52,35 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.appendChild(overlay);
     }
 
-    function openSidebar() {
+    const openSidebar = () => {
       sidebar.classList.add('open');
       overlay.classList.add('active');
       document.body.style.overflow = 'hidden';
-    }
-    function closeSidebar() {
+    };
+    const closeSidebar = () => {
       sidebar.classList.remove('open');
       overlay.classList.remove('active');
       document.body.style.overflow = '';
-    }
+    };
 
-    sidebarToggle.addEventListener('click', (e) => {
+    // Use currentTarget (the button itself, not a child icon) to avoid e.target === <i> bug
+    sidebarToggle.addEventListener('click', function(e) {
+      e.preventDefault();
       e.stopPropagation();
       sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     });
 
+    // Clicking the dark overlay closes sidebar
     overlay.addEventListener('click', closeSidebar);
 
-    // Close sidebar when a nav link is clicked on mobile
+    // Swipe-right on sidebar closes it (touch UX)
+    let touchStartX = 0;
+    sidebar.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    sidebar.addEventListener('touchend', (e) => {
+      if (e.changedTouches[0].clientX - touchStartX < -60) closeSidebar();
+    }, { passive: true });
+
+    // Close when a nav link is tapped on mobile
     sidebar.querySelectorAll('.sidebar-link').forEach(link => {
       link.addEventListener('click', () => {
         if (window.innerWidth < 992) closeSidebar();

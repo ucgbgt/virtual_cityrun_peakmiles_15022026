@@ -10,8 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Tentukan halaman tujuan redirect (dashboard atau submissions)
 $referer = $_SERVER['HTTP_REFERER'] ?? '';
 $backUrl = strpos($referer, 'submissions') !== false
-    ? SITE_URL . '/submissions.php'
-    : SITE_URL . '/dashboard.php';
+    ? SITE_URL . '/submissions'
+    : SITE_URL . '/dashboard';
 
 if (!validateCSRF($_POST['csrf_token'] ?? '')) {
     flash('error', 'Token tidak valid. Silakan refresh halaman dan coba lagi.');

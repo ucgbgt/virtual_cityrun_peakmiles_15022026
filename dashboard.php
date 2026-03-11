@@ -158,13 +158,10 @@ $csrf = generateCSRFToken();
           <div>
             <div style="font-size:12px;color:var(--gray-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Progres Lari</div>
             <div class="d-flex align-items-center gap-12">
-              <?php
-              $paymentPaid = ($registration['payment_status'] ?? 'unpaid') === 'paid';
-              ?>
-              <span class="status-badge <?= $isFinisher ? 'badge-finisher' : ($paymentPaid ? 'badge-active' : '') ?>"
-                    style="<?= (!$isFinisher && !$paymentPaid) ? 'background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);' : '' ?>">
-                <i class="fa fa-<?= $isFinisher ? 'trophy' : ($paymentPaid ? 'circle' : 'lock') ?>" style="font-size:8px;"></i>
-                <?= $isFinisher ? 'FINISHER' : ($paymentPaid ? 'ACTIVE' : 'INACTIVE') ?>
+              <span class="status-badge <?= $isFinisher ? 'badge-finisher' : ($isActive ? 'badge-active' : '') ?>"
+                    style="<?= (!$isFinisher && !$isActive) ? 'background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);' : '' ?>">
+                <i class="fa fa-<?= $isFinisher ? 'trophy' : ($isActive ? 'circle' : 'lock') ?>" style="font-size:8px;"></i>
+                <?= $isFinisher ? 'FINISHER' : ($isActive ? 'ACTIVE' : 'INACTIVE') ?>
               </span>
               <span style="color:var(--gray-light);font-size:13px;margin-left:8px;">Kategori <?= $registration['category'] ?></span>
             </div>
@@ -526,7 +523,7 @@ $csrf = generateCSRFToken();
   <img id="lightbox-img" src="" alt="">
 </div>
 
-<?php if ($registration && ($registration['payment_status'] ?? 'unpaid') === 'unpaid'): ?>
+<?php if ($registration && !$isActive): ?>
 <!-- MODAL BAYAR DARI DASHBOARD -->
 <div class="modal-overlay" id="paymentModal">
   <div class="modal-box" style="max-width:420px;text-align:center;">

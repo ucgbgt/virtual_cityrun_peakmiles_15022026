@@ -296,15 +296,21 @@ $exportParams = http_build_query(array_filter([
                 <td style="font-size:12px;color:var(--gray-light);"><?= $p['jersey_size'] ?: '-' ?><br><?= sanitize($p['city'] ?? '-') ?></td>
                 <td><span class="status-badge badge-<?= $p['shipping_status'] ?>"><?= $shippingLabels[$p['shipping_status']] ?? '-' ?></span></td>
                 <td>
-                  <?php if (!$isAccountActive): ?>
-                  <button class="btn-activate btn-activate-on" onclick="activateParticipant(<?= $p['id'] ?>, 1)">
-                    <i class="fa fa-user-check"></i> Aktifkan
-                  </button>
-                  <?php else: ?>
-                  <button class="btn-activate btn-activate-off" onclick="activateParticipant(<?= $p['id'] ?>, 0)" <?= $isPaid ? 'title="Sudah lunas via pembayaran"' : '' ?>>
-                    <i class="fa fa-user-times"></i> Nonaktifkan
-                  </button>
-                  <?php endif; ?>
+                  <div class="d-flex gap-1 flex-wrap">
+                    <?php if (!$isAccountActive): ?>
+                    <button class="btn-activate btn-activate-on" onclick="activateParticipant(<?= $p['id'] ?>, 1)">
+                      <i class="fa fa-user-check"></i> Aktifkan
+                    </button>
+                    <?php else: ?>
+                    <button class="btn-activate btn-activate-off" onclick="activateParticipant(<?= $p['id'] ?>, 0)" <?= $isPaid ? 'title="Sudah lunas via pembayaran"' : '' ?>>
+                      <i class="fa fa-user-times"></i> Nonaktifkan
+                    </button>
+                    <?php endif; ?>
+                    <button class="btn-activate" onclick="confirmDelete(<?= $p['user_id'] ?>, '<?= addslashes(sanitize($p['name'])) ?>')"
+                            style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
               <?php endforeach; ?>
@@ -333,6 +339,58 @@ $exportParams = http_build_query(array_filter([
     </div>
   </div>
 </div>
+<!-- Modal Konfirmasi Hapus Peserta -->
+<div class="modal-overlay" id="deleteParticipantModal">
+  <div class="modal-box" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('deleteParticipantModal')">&times;</button>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="width:64px;height:64px;background:rgba(239,68,68,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <i class="fa fa-trash" style="font-size:26px;color:#ef4444;"></i>
+      </div>
+      <h3 style="font-size:18px;font-weight:800;color:#ef4444;margin-bottom:8px;">Hapus Peserta?</h3>
+      <p style="color:var(--gray-light);font-size:13px;line-height:1.6;margin:0;">
+        Kamu akan menghapus <strong id="deleteParticipantName" style="color:#fff;"></strong> beserta <strong style="color:#ef4444;">seluruh datanya</strong>.
+      </p>
+    </div>
+
+    <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:600;color:#ef4444;margin-bottom:8px;">
+        <i class="fa fa-exclamation-triangle" style="margin-right:6px;"></i>Data yang akan dihapus permanen:
+      </div>
+      <ul style="font-size:12px;color:var(--gray-light);margin:0;padding-left:18px;line-height:2;">
+        <li>Akun user & profil</li>
+        <li>Semua submission lari + file bukti</li>
+        <li>Data registrasi event</li>
+        <li>Info pengiriman</li>
+        <li>Sertifikat (jika ada)</li>
+        <li>Foto profil</li>
+      </ul>
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label" style="color:var(--gray-light);">
+        Ketik nama peserta untuk konfirmasi:
+        <strong id="deleteConfirmHint" style="color:#fff;"></strong>
+      </label>
+      <input type="text" id="deleteConfirmInput" class="form-control-custom"
+             placeholder="Ketik nama peserta di sini..."
+             oninput="checkDeleteConfirm()">
+    </div>
+
+    <div id="deleteError" class="alert-custom alert-danger" style="display:none;margin-bottom:12px;"></div>
+
+    <div style="display:flex;gap:12px;">
+      <button id="btnConfirmDelete" onclick="doDeleteParticipant()"
+              class="btn-danger-custom" style="flex:1;justify-content:center;padding:12px;border-radius:var(--radius);font-size:14px;" disabled>
+        <i class="fa fa-trash"></i> Hapus Permanen
+      </button>
+      <button onclick="closeModal('deleteParticipantModal')" class="btn-outline-custom" style="padding:12px 20px;">
+        Batal
+      </button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
@@ -370,6 +428,68 @@ function activateParticipant(regId, activate) {
     }
   })
   .catch(() => { alert('Gagal terhubung ke server.'); location.reload(); });
+}
+
+let _deleteUserId   = null;
+let _deleteUserName = '';
+
+function confirmDelete(userId, userName) {
+  _deleteUserId   = userId;
+  _deleteUserName = userName;
+  document.getElementById('deleteParticipantName').textContent  = userName;
+  document.getElementById('deleteConfirmHint').textContent      = '"' + userName + '"';
+  document.getElementById('deleteConfirmInput').value           = '';
+  document.getElementById('btnConfirmDelete').disabled          = true;
+  document.getElementById('deleteError').style.display          = 'none';
+  openModal('deleteParticipantModal');
+}
+
+function checkDeleteConfirm() {
+  const val = document.getElementById('deleteConfirmInput').value.trim();
+  document.getElementById('btnConfirmDelete').disabled = (val !== _deleteUserName);
+}
+
+function doDeleteParticipant() {
+  const btn = document.getElementById('btnConfirmDelete');
+  const errEl = document.getElementById('deleteError');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Menghapus...';
+  errEl.style.display = 'none';
+
+  fetch('<?= SITE_URL ?>/api/delete-participant.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: _deleteUserId, csrf_token: '<?= $csrf ?>' })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      closeModal('deleteParticipantModal');
+      // Hapus baris dari tabel tanpa reload
+      document.querySelectorAll('button[onclick*="confirmDelete(' + _deleteUserId + ',"]').forEach(function(b) {
+        var row = b.closest('tr');
+        if (row) row.remove();
+      });
+      // Tampilkan flash sukses di topbar
+      var alert = document.createElement('div');
+      alert.className = 'alert-custom alert-success';
+      alert.style.cssText = 'margin:0 0 16px;';
+      alert.innerHTML = '<i class="fa fa-check-circle"></i> ' + data.message;
+      document.querySelector('.page-content').prepend(alert);
+      setTimeout(function() { alert.remove(); }, 5000);
+    } else {
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + data.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-trash"></i> Hapus Permanen';
+    }
+  })
+  .catch(function() {
+    errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Gagal terhubung ke server.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-trash"></i> Hapus Permanen';
+  });
 }
 </script>
 </body>

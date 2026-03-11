@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $pageTitle = 'Dashboard';
 $activeNav = 'dashboard';
 require_once __DIR__ . '/includes/functions.php';
@@ -119,9 +119,20 @@ $csrf = generateCSRFToken();
       <?php endif; ?>
 
       <?php if (!$registration && $event): ?>
-      <div class="alert-custom alert-warning mb-4">
-        <i class="fa fa-exclamation-triangle"></i>
-        <span>Kamu belum terdaftar di event aktif.</span>
+      <!-- BANNER BELUM TERDAFTAR -->
+      <div style="background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(249,115,22,0.06));border:1px solid rgba(249,115,22,0.35);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:44px;height:44px;background:rgba(249,115,22,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fa fa-running" style="color:var(--primary);font-size:18px;"></i>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#fff;font-size:15px;margin-bottom:2px;">Belum Terdaftar Event</div>
+            <div style="color:var(--gray-light);font-size:13px;">Daftarkan dirimu ke <strong style="color:var(--primary);"><?= sanitize($event['name']) ?></strong> untuk mulai berlari!</div>
+          </div>
+        </div>
+        <button onclick="openModal('joinEventModal')" class="btn-primary-custom btn-sm-custom" style="flex-shrink:0;">
+          <i class="fa fa-plus-circle"></i> Daftar Event Sekarang
+        </button>
       </div>
       <?php endif; ?>
 
@@ -354,6 +365,56 @@ $csrf = generateCSRFToken();
   </div>
 </div>
 
+<!-- JOIN EVENT MODAL -->
+<?php if ($event && !$registration): ?>
+<div class="modal-overlay" id="joinEventModal">
+  <div class="modal-box" style="max-width:480px;">
+    <button class="modal-close" onclick="closeModal('joinEventModal')">&times;</button>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="width:64px;height:64px;background:rgba(249,115,22,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <i class="fa fa-running" style="font-size:28px;color:var(--primary);"></i>
+      </div>
+      <h3 class="modal-title" style="margin-bottom:6px;">Daftar ke Event</h3>
+      <p style="color:var(--gray-light);font-size:13px;margin:0;">
+        <strong style="color:#fff;"><?= sanitize($event['name']) ?></strong><br>
+        <?= date('d M Y', strtotime($event['start_date'])) ?> — <?= date('d M Y', strtotime($event['end_date'])) ?>
+      </p>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:13px;color:var(--gray-light);font-weight:600;margin-bottom:12px;">Pilih Kategori:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <label id="card-10K" onclick="selectJoinCategory('10K')" style="border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:all 0.2s;">
+          <input type="radio" name="joinCat" value="10K" style="display:none;">
+          <div style="font-size:22px;font-weight:700;color:var(--primary);margin-bottom:4px;">10K</div>
+          <div style="font-size:12px;color:var(--gray-light);margin-bottom:8px;">10 Kilometer</div>
+          <div style="font-size:13px;font-weight:600;color:#fff;">Rp <?= number_format($event['fee_10k'] ?? 179000, 0, ',', '.') ?></div>
+        </label>
+        <label id="card-21K" onclick="selectJoinCategory('21K')" style="border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:all 0.2s;">
+          <input type="radio" name="joinCat" value="21K" style="display:none;">
+          <div style="font-size:22px;font-weight:700;color:var(--primary);margin-bottom:4px;">21K</div>
+          <div style="font-size:12px;color:var(--gray-light);margin-bottom:8px;">21 Kilometer</div>
+          <div style="font-size:13px;font-weight:600;color:#fff;">Rp <?= number_format($event['fee_21k'] ?? 199000, 0, ',', '.') ?></div>
+        </label>
+      </div>
+    </div>
+
+    <div id="joinError" style="display:none;" class="alert-custom alert-danger" style="margin-bottom:12px;"></div>
+    <div id="joinLoading" style="display:none;text-align:center;padding:12px;">
+      <i class="fa fa-spinner fa-spin" style="color:var(--primary);font-size:22px;"></i>
+      <div style="color:var(--gray-light);font-size:13px;margin-top:6px;">Mendaftarkan...</div>
+    </div>
+
+    <button id="btnJoin" onclick="doJoinEvent()" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;" disabled>
+      <i class="fa fa-check-circle"></i> Daftar Sekarang
+    </button>
+    <p style="text-align:center;color:var(--gray-light);font-size:12px;margin-top:12px;">
+      Setelah daftar, selesaikan pembayaran untuk mengaktifkan akun.
+    </p>
+  </div>
+</div>
+<?php endif; ?>
+
 <!-- INACTIVE NOTICE MODAL -->
 <div class="modal-overlay" id="inactiveNoticeModal">
   <div class="modal-box" style="max-width:420px;text-align:center;">
@@ -563,6 +624,59 @@ function doPayment() {
   });
 }
 
+// Join Event
+var joinSelectedCategory = null;
+
+function selectJoinCategory(cat) {
+  joinSelectedCategory = cat;
+  ['10K', '21K'].forEach(function(c) {
+    var card = document.getElementById('card-' + c);
+    if (!card) return;
+    if (c === cat) {
+      card.style.borderColor = 'var(--primary)';
+      card.style.background  = 'rgba(249,115,22,0.08)';
+    } else {
+      card.style.borderColor = 'var(--border)';
+      card.style.background  = '';
+    }
+  });
+  var btn = document.getElementById('btnJoin');
+  if (btn) btn.disabled = false;
+}
+
+function doJoinEvent() {
+  if (!joinSelectedCategory) return;
+  document.getElementById('btnJoin').disabled = true;
+  document.getElementById('joinLoading').style.display = 'block';
+  document.getElementById('joinError').style.display   = 'none';
+
+  fetch('<?= SITE_URL ?>/api/join-event.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category: joinSelectedCategory, csrf_token: '<?= htmlspecialchars($csrf) ?>' })
+  })
+  .then(r => r.json())
+  .then(function(data) {
+    document.getElementById('joinLoading').style.display = 'none';
+    if (data.success) {
+      closeModal('joinEventModal');
+      window.location.reload();
+    } else {
+      var err = document.getElementById('joinError');
+      err.style.display = 'block';
+      err.textContent = data.message || 'Gagal mendaftar.';
+      document.getElementById('btnJoin').disabled = false;
+    }
+  })
+  .catch(function() {
+    document.getElementById('joinLoading').style.display = 'none';
+    var err = document.getElementById('joinError');
+    err.style.display = 'block';
+    err.textContent = 'Terjadi kesalahan jaringan.';
+    document.getElementById('btnJoin').disabled = false;
+  });
+}
+
 // Show sidebar toggle on mobile
 document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('sidebarToggle');
@@ -574,6 +688,11 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Mengirim...';
     btn.disabled = true;
   });
+
+  // Auto-open join event modal jika belum terdaftar
+  <?php if ($event && !$registration): ?>
+  openModal('joinEventModal');
+  <?php endif; ?>
 });
 </script>
 </body>

@@ -53,12 +53,20 @@ if (!empty($user['avatar'])) {
     if (file_exists($oldPath)) unlink($oldPath);
 }
 
+// Pastikan folder ada, buat jika belum
+if (!is_dir(AVATAR_PATH)) {
+    if (!mkdir(AVATAR_PATH, 0755, true)) {
+        echo json_encode(['success' => false, 'message' => 'Gagal membuat folder upload. Hubungi admin.']);
+        exit;
+    }
+}
+
 $ext      = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$mimeType];
 $filename = 'avatar_' . $user['id'] . '_' . time() . '.' . $ext;
 $dest     = AVATAR_PATH . $filename;
 
 if (!move_uploaded_file($file['tmp_name'], $dest)) {
-    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan foto. Cek permission folder.']);
+    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan foto. Cek permission folder uploads/avatars/.']);
     exit;
 }
 

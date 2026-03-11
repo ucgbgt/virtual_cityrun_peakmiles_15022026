@@ -88,6 +88,18 @@ function checkAndUpdateFinisher(int $userId, int $eventId): bool {
     return false;
 }
 
+function regenerateCertificatesForUser(int $userId): void {
+    $db = getDB();
+    $certs = $db->prepare("SELECT * FROM certificates WHERE user_id=?");
+    $certs->execute([$userId]);
+    foreach ($certs->fetchAll() as $cert) {
+        $filepath = CERT_PATH . $cert['file_path'];
+        if (file_exists($filepath)) unlink($filepath);
+        $db->prepare("DELETE FROM certificates WHERE id=?")->execute([$cert['id']]);
+        generateCertificate($userId, $cert['event_id']);
+    }
+}
+
 function generateCertificate(int $userId, int $eventId): ?string {
     $db = getDB();
     // Check if already exists

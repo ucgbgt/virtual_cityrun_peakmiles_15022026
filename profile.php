@@ -29,7 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($newPassword && strlen($newPassword) < 8) { $error = 'Password minimal 8 karakter.'; }
         elseif ($newPassword && $newPassword !== $confirmPassword) { $error = 'Konfirmasi password tidak cocok.'; }
         else {
+            $nameChanged = ($name !== $user['name']);
             $db->prepare("UPDATE users SET name=?, phone=? WHERE id=?")->execute([$name, $phone, $user['id']]);
+            if ($nameChanged) regenerateCertificatesForUser($user['id']);
             if ($newPassword) {
                 $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
                 $db->prepare("UPDATE users SET password_hash=? WHERE id=?")->execute([$hash, $user['id']]);

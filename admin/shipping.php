@@ -85,12 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
     $matched   = 0;
     $skipped   = 0;
     $errors    = [];
-    $matchCol  = $_POST['match_col'] ?? 'phone'; // 'phone' atau 'email'
+    $matchCol  = $_POST['match_col'] ?? 'phone';
     $courierImp = trim($_POST['import_courier'] ?? '');
 
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
         $handle = fopen($_FILES['csv_file']['tmp_name'], 'r');
-        // Skip header row
         $header = fgetcsv($handle);
         $row    = 1;
         while (($data = fgetcsv($handle)) !== false) {
@@ -102,7 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
 
             if (empty($matchVal) || empty($resi)) { $skipped++; continue; }
 
-            // Normalize phone: hapus spasi dan +62 → 08
             if ($matchCol === 'phone') {
                 $matchVal = preg_replace('/\s+/', '', $matchVal);
                 if (substr($matchVal, 0, 3) === '+62') $matchVal = '0' . substr($matchVal, 3);
@@ -144,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// CSV EXPORT — sebelum HTML output
+// CSV EXPORT
 // ══════════════════════════════════════════════════════════════════════
 $filterStatus   = $_GET['status']   ?? '';
 $filterCategory = $_GET['category'] ?? '';
@@ -233,11 +231,11 @@ $kpiTotal = $kpi['not_ready'] + $kpi['preparing'] + $kpi['shipped'] + $kpi['deli
 $kpiDonePercent = $kpiTotal > 0 ? round($kpi['delivered'] / $kpiTotal * 100) : 0;
 
 // ══════════════════════════════════════════════════════════════════════
-// JERSEY SIZE SUMMARY — selalu tampilkan semua ukuran standar
+// JERSEY SIZE SUMMARY
 // ══════════════════════════════════════════════════════════════════════
 $jerseyOrder  = ['XS','S','M','L','XL','XXL','XXXL'];
-$jerseyData   = array_fill_keys($jerseyOrder, 0); // default 0 semua
-$jerseyOther  = 0; // ukuran di luar daftar standar atau kosong
+$jerseyData   = array_fill_keys($jerseyOrder, 0);
+$jerseyOther  = 0;
 if ($event) {
     $jStmt = $db->prepare("
         SELECT COALESCE(UPPER(TRIM(p.jersey_size)),'') AS sz, COUNT(*) AS c
@@ -252,7 +250,7 @@ if ($event) {
         if (isset($jerseyData[$sz])) {
             $jerseyData[$sz] = (int)$cnt;
         } else {
-            $jerseyOther += (int)$cnt; // kosong atau ukuran tak dikenal
+            $jerseyOther += (int)$cnt;
         }
     }
 }
@@ -288,7 +286,6 @@ $stmt->execute(array_merge($params, [$perPage, $offset]));
 $rows = $stmt->fetchAll();
 $totalPages = $total ? ceil($total / $perPage) : 1;
 
-// Export URL with all filters
 $exportUrl = '?' . http_build_query(array_filter([
     'export'   => 'csv',
     'search'   => $search,
@@ -299,13 +296,146 @@ $exportUrl = '?' . http_build_query(array_filter([
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manajemen Pengiriman — PeakMiles Admin</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/bootstrap.min.css">
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/admin.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── Shipping Page ── */
+.ship-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr) 1.4fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.ship-kpi-item {
+  background: var(--dark-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .2s, transform .15s, background .2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ship-kpi-item:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-1px); }
+.ship-kpi-item.active { border-color: var(--primary); background: rgba(249,115,22,0.05); }
+.s-kpi-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.s-kpi-val { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -.5px; }
+.s-kpi-lbl { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; font-weight: 600; }
+
+.ship-kpi-progress {
+  background: var(--dark-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color .2s;
+}
+.ship-kpi-progress:hover { border-color: rgba(255,255,255,0.1); }
+.prog-header { display: flex; justify-content: space-between; align-items: center; }
+.prog-label { font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; }
+.prog-pct { font-size: 20px; font-weight: 800; color: #22c55e; line-height: 1; }
+.prog-bar { height: 5px; border-radius: 100px; background: rgba(255,255,255,0.05); overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg,#22c55e,#4ade80); border-radius: 100px; transition: width .4s; }
+.prog-sub { font-size: 11px; color: var(--gray); }
+
+.jersey-card {
+  background: var(--dark-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.jersey-card-label { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.jersey-card-label i { color: var(--primary); font-size: 13px; }
+.jersey-card-label span { font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .6px; }
+.jersey-sizes { display: flex; align-items: center; flex-wrap: wrap; flex: 1; }
+.jersey-sz { display: flex; flex-direction: column; align-items: center; padding: 5px 14px; border-right: 1px solid rgba(255,255,255,0.06); gap: 2px; }
+.jersey-sz:last-child { border-right: none; }
+.jersey-sz-lbl { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; }
+.jersey-sz-val { font-size: 17px; font-weight: 800; color: var(--gray); line-height: 1; }
+.jersey-sz.has-data .jersey-sz-val { color: var(--primary); }
+.jersey-sz.is-total .jersey-sz-val { color: #fff; font-size: 15px; }
+.jersey-sz.is-total .jersey-sz-lbl { color: var(--gray-light); }
+
+.ship-filter {
+  background: var(--dark-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+}
+
+.table-card {
+  background: var(--dark-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.table-card-title { font-size: 13px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+.table-card-title i { color: var(--primary); }
+.table-card-meta { font-size: 12px; color: var(--gray); }
+
+.ss-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; border: 1px solid; white-space: nowrap; }
+.ss-not-ready { background: rgba(107,114,128,.1); color: #9ca3af; border-color: rgba(107,114,128,.25); }
+.ss-preparing  { background: rgba(245,158,11,.1);  color: #f59e0b; border-color: rgba(245,158,11,.25); }
+.ss-shipped    { background: rgba(59,130,246,.1);  color: #60a5fa; border-color: rgba(59,130,246,.25); }
+.ss-delivered  { background: rgba(34,197,94,.1);   color: #22c55e; border-color: rgba(34,197,94,.25); }
+
+.jersey-pill { display: inline-block; margin-top: 5px; font-size: 11px; background: rgba(249,115,22,0.1); color: var(--primary); padding: 2px 9px; border-radius: 6px; font-weight: 700; }
+.tracking-num { font-family: monospace; font-size: 11px; font-weight: 700; color: var(--primary); }
+.copy-btn { background: none; border: none; color: var(--gray); cursor: pointer; padding: 0 3px; font-size: 10px; transition: color .15s; }
+.copy-btn:hover { color: #fff; }
+
+.table-pagination { display: flex; align-items: center; gap: 5px; padding: 14px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.pg-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; color: var(--gray-light); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); transition: all .15s; }
+.pg-btn:hover { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.3); color: var(--primary); }
+.pg-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.list-footer { font-size: 12px; color: var(--gray); padding-bottom: 80px; margin-top: 8px; }
+
+@media (max-width: 1200px) { .ship-kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+  .ship-kpi-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .jersey-card { padding: 10px 14px; }
+  .jersey-sz { padding: 4px 10px; }
+  .jersey-sz-val { font-size: 15px; }
+  .table-card-header { flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; }
+  .ship-filter { padding: 12px 14px; }
+}
+@media (max-width: 480px) {
+  .ship-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .jersey-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .jersey-sizes { gap: 0; }
+  .jersey-sz { padding: 3px 7px; }
+  .jersey-sz-val { font-size: 13px; }
+  .jersey-sz-lbl { font-size: 9px; }
+  .ship-kpi-item { padding: 12px; }
+  .s-kpi-val { font-size: 18px; }
+  .s-kpi-icon { width: 32px; height: 32px; font-size: 12px; }
+}
+</style>
 </head>
 <body>
 <div class="dashboard-layout">
@@ -357,97 +487,95 @@ $exportUrl = '?' . http_build_query(array_filter([
       </div>
       <?php endif; ?>
 
-      <!-- ══ KPI STRIP — satu baris horizontal ══ -->
-      <div class="kpi-strip">
+      <!-- KPI Grid -->
+      <div class="ship-kpi-grid">
         <?php
         $kpiDefs = [
-            ['not_ready', $kpi['not_ready'], 'Belum Siap',   '#6b7280', 'fa-box-open'],
-            ['preparing', $kpi['preparing'], 'Disiapkan',    '#f59e0b', 'fa-box'],
-            ['shipped',   $kpi['shipped'],   'Dikirim',      '#3b82f6', 'fa-shipping-fast'],
-            ['delivered', $kpi['delivered'], 'Terkirim',     '#22c55e', 'fa-check-circle'],
-            ['no_address',$kpi['no_address'],'Alamat Kosong','#ef4444', 'fa-exclamation-triangle'],
+            ['not_ready',  $kpi['not_ready'],  'Belum Siap',    '#6b7280', 'fa-box-open'],
+            ['preparing',  $kpi['preparing'],  'Disiapkan',     '#f59e0b', 'fa-box'],
+            ['shipped',    $kpi['shipped'],    'Dikirim',       '#3b82f6', 'fa-shipping-fast'],
+            ['delivered',  $kpi['delivered'],  'Terkirim',      '#22c55e', 'fa-check-circle'],
+            ['no_address', $kpi['no_address'], 'Alamat Kosong', '#ef4444', 'fa-exclamation-triangle'],
         ];
         foreach ($kpiDefs as [$val, $count, $label, $color, $icon]):
         ?>
-        <div class="kpi-ship <?= $filterStatus === $val ? 'active' : '' ?>"
-             onclick="filterByStatus('<?= $val ?>')" title="Klik untuk filter: <?= $label ?>">
-          <div class="kpi-icon" style="background:<?= $color ?>20;color:<?= $color ?>;"><i class="fa <?= $icon ?>"></i></div>
+        <div class="ship-kpi-item <?= $filterStatus === $val ? 'active' : '' ?>"
+             onclick="filterByStatus('<?= $val ?>')" title="Filter: <?= $label ?>">
+          <div class="s-kpi-icon" style="background:<?= $color ?>1a;color:<?= $color ?>;"><i class="fa <?= $icon ?>"></i></div>
           <div>
-            <div class="kv" style="color:<?= ($count > 0 && $val === 'no_address') ? '#ef4444' : '#fff' ?>;"><?= $count ?></div>
-            <div class="kl"><?= $label ?></div>
+            <div class="s-kpi-val" <?= ($count > 0 && $val === 'no_address') ? 'style="color:#ef4444;"' : '' ?>><?= $count ?></div>
+            <div class="s-kpi-lbl"><?= $label ?></div>
           </div>
         </div>
         <?php endforeach; ?>
         <!-- Progress tile -->
-        <div class="kpi-ship kpi-progress" style="min-width:200px;flex-direction:column;align-items:flex-start;gap:6px;cursor:default;">
-          <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-            <span style="font-size:9px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px;">Selesai Terkirim</span>
-            <span style="font-size:14px;font-weight:800;color:#22c55e;"><?= $kpiDonePercent ?>%</span>
+        <div class="ship-kpi-progress">
+          <div class="prog-header">
+            <span class="prog-label">Selesai Terkirim</span>
+            <span class="prog-pct"><?= $kpiDonePercent ?>%</span>
           </div>
-          <div style="width:100%;height:5px;border-radius:100px;background:rgba(255,255,255,0.06);overflow:hidden;">
-            <div style="height:100%;width:<?= $kpiDonePercent ?>%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:100px;transition:width .4s;"></div>
-          </div>
-          <div style="font-size:10px;color:var(--gray-light);"><?= $kpi['delivered'] ?> dari <?= $kpiTotal ?> peserta</div>
+          <div class="prog-bar"><div class="prog-fill" style="width:<?= $kpiDonePercent ?>%;"></div></div>
+          <div class="prog-sub"><?= $kpi['delivered'] ?> dari <?= $kpiTotal ?> peserta</div>
         </div>
       </div>
 
-      <!-- ══ JERSEY SIZE SUMMARY ══ -->
-      <div class="jersey-summary">
-        <div class="jersey-summary-label">
-          <i class="fa fa-tshirt" style="color:var(--primary);font-size:13px;"></i>
-          <span style="font-size:10px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.6px;font-weight:600;">Jersey</span>
+      <!-- Jersey Summary -->
+      <div class="jersey-card">
+        <div class="jersey-card-label">
+          <i class="fa fa-tshirt"></i>
+          <span>Jersey</span>
         </div>
-        <div class="jsize-row" style="flex:1;">
+        <div class="jersey-sizes">
           <?php foreach ($jerseyOrder as $sz): $cnt = $jerseyData[$sz]; ?>
-          <div class="jsize-item <?= $cnt > 0 ? 'js-has-data' : '' ?>">
-            <span class="js-label"><?= $sz ?></span>
-            <span class="js-val"><?= $cnt ?></span>
+          <div class="jersey-sz <?= $cnt > 0 ? 'has-data' : '' ?>">
+            <span class="jersey-sz-lbl"><?= $sz ?></span>
+            <span class="jersey-sz-val"><?= $cnt ?></span>
           </div>
           <?php endforeach; ?>
           <?php if ($jerseyOther > 0): ?>
-          <div class="jsize-item" style="color:var(--gray-light);">
-            <span class="js-label">Lainnya</span>
-            <span class="js-val" style="color:var(--gray-light);font-size:14px;"><?= $jerseyOther ?></span>
+          <div class="jersey-sz">
+            <span class="jersey-sz-lbl">Lainnya</span>
+            <span class="jersey-sz-val" style="color:var(--gray-light);"><?= $jerseyOther ?></span>
           </div>
           <?php endif; ?>
-          <div class="jsize-item js-total">
-            <span class="js-label">Total</span>
-            <span class="js-val"><?= $jerseyTotal ?></span>
+          <div class="jersey-sz is-total">
+            <span class="jersey-sz-lbl">Total</span>
+            <span class="jersey-sz-val"><?= $jerseyTotal ?></span>
           </div>
         </div>
       </div>
 
-      <!-- ══ FILTER BAR ══ -->
-      <div class="filter-bar">
+      <!-- Filter Bar -->
+      <div class="ship-filter">
         <form method="GET" class="row g-2 align-items-end" id="filterForm">
-          <div class="col-md-4">
+          <div class="col-md-4 col-sm-6">
             <input type="text" name="search" class="form-control-custom" placeholder="Cari nama / email..." value="<?= sanitize($search) ?>">
           </div>
-          <div class="col-md-3">
+          <div class="col-md-3 col-sm-6">
             <select name="status" class="form-control-custom" id="statusFilter">
               <option value="">Semua Status Kirim</option>
               <option value="not_ready"  <?= $filterStatus === 'not_ready'  ? 'selected' : '' ?>>Belum Siap</option>
               <option value="preparing"  <?= $filterStatus === 'preparing'  ? 'selected' : '' ?>>Sedang Disiapkan</option>
               <option value="shipped"    <?= $filterStatus === 'shipped'    ? 'selected' : '' ?>>Dikirim</option>
               <option value="delivered"  <?= $filterStatus === 'delivered'  ? 'selected' : '' ?>>Terkirim</option>
-              <option value="no_address" <?= $filterStatus === 'no_address' ? 'selected' : '' ?>>⚠ Alamat Kosong</option>
+              <option value="no_address" <?= $filterStatus === 'no_address' ? 'selected' : '' ?>>&#9888; Alamat Kosong</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2 col-sm-6">
             <select name="category" class="form-control-custom">
               <option value="">Semua Kategori</option>
               <option value="10K" <?= $filterCategory === '10K' ? 'selected' : '' ?>>10K</option>
               <option value="21K" <?= $filterCategory === '21K' ? 'selected' : '' ?>>21K</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2 col-sm-6">
             <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:10px 0;">
               <i class="fa fa-filter"></i> Filter
             </button>
           </div>
           <?php if ($filterStatus || $search || $filterCategory): ?>
-          <div class="col-md-1">
-            <a href="?" class="btn-outline-custom" style="width:100%;justify-content:center;padding:10px 0;" title="Reset filter">
+          <div class="col-auto">
+            <a href="?" class="btn-outline-custom" style="padding:10px 16px;" title="Reset filter">
               <i class="fa fa-times"></i>
             </a>
           </div>
@@ -455,39 +583,37 @@ $exportUrl = '?' . http_build_query(array_filter([
         </form>
       </div>
 
-      <!-- ══ TABLE ══ -->
-      <div class="table-container">
-        <div class="table-header">
-          <div class="table-title"><i class="fa fa-shipping-fast" style="color:var(--primary);margin-right:8px;font-size:14px;"></i>Data Pengiriman</div>
-          <div style="font-size:12px;color:var(--gray-light);">Halaman <?= $page ?> dari <?= $totalPages ?> · <?= $total ?> peserta</div>
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <div class="table-card-title"><i class="fa fa-shipping-fast"></i> Data Pengiriman</div>
+          <div class="table-card-meta">Hal. <?= $page ?> / <?= $totalPages ?> &middot; <?= $total ?> peserta</div>
         </div>
         <div style="overflow-x:auto;">
           <table class="table-custom" id="shippingTable">
             <thead>
               <tr>
-                <th style="width:38px;">
-                  <input type="checkbox" id="checkAll" title="Pilih Semua"
-                         style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary);">
+                <th class="th-cb">
+                  <input type="checkbox" id="checkAll" class="cb-custom" title="Pilih Semua">
                 </th>
                 <th>Peserta</th>
-                <th>Kategori</th>
-                <th>Alamat & Jersey</th>
-                <th>Status Kirim</th>
-                <th>Kurir & Resi</th>
+                <th>Kat.</th>
+                <th>Alamat &amp; Jersey</th>
+                <th>Status</th>
+                <th>Kurir &amp; Resi</th>
                 <th style="width:90px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($rows as $row):
-                $hasAddr = !empty($row['address_full']);
-                $sl = ['not_ready'=>'Belum','preparing'=>'Disiapkan','shipped'=>'Dikirim','delivered'=>'Terkirim'];
-                $sc = ['not_ready'=>'#6b7280','preparing'=>'#f59e0b','shipped'=>'#3b82f6','delivered'=>'#22c55e'];
-                $statusColor = $sc[$row['shipping_status']] ?? '#6b7280';
+                $hasAddr    = !empty($row['address_full']);
+                $ssBadge    = ['not_ready'=>'ss-not-ready','preparing'=>'ss-preparing','shipped'=>'ss-shipped','delivered'=>'ss-delivered'];
+                $ssLabel    = ['not_ready'=>'Belum','preparing'=>'Disiapkan','shipped'=>'Dikirim','delivered'=>'Terkirim'];
+                $badgeClass = $ssBadge[$row['shipping_status']] ?? 'ss-not-ready';
               ?>
               <tr data-uid="<?= $row['user_id'] ?>">
-                <td>
-                  <input type="checkbox" class="row-check" value="<?= $row['user_id'] ?>"
-                         style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary);">
+                <td class="td-cb">
+                  <input type="checkbox" class="row-check cb-custom" value="<?= $row['user_id'] ?>">
                 </td>
                 <td>
                   <div class="cell-name"><?= sanitize($row['name']) ?></div>
@@ -496,47 +622,38 @@ $exportUrl = '?' . http_build_query(array_filter([
                   <div class="cell-sub"><?= sanitize($row['phone']) ?></div>
                   <?php endif; ?>
                 </td>
-                <td>
-                  <span class="badge-category"><?= $row['category'] ?></span>
-                </td>
+                <td><span class="badge-category"><?= $row['category'] ?></span></td>
                 <td style="max-width:200px;">
                   <?php if ($hasAddr): ?>
-                  <div style="font-size:11px;color:var(--gray-light);line-height:1.5;">
-                    <?= sanitize(substr($row['address_full'], 0, 60)) ?><?= strlen($row['address_full']) > 60 ? '…' : '' ?>
+                  <div class="cell-sub" style="line-height:1.5;">
+                    <?= sanitize(substr($row['address_full'], 0, 60)) ?><?= strlen($row['address_full']) > 60 ? '&#8230;' : '' ?>
                     <br><?= sanitize($row['city'] ?? '-') ?>, <?= sanitize($row['province'] ?? '-') ?>
                     <?php if ($row['postal_code']): ?> <?= sanitize($row['postal_code']) ?><?php endif; ?>
                   </div>
                   <?php else: ?>
-                  <span style="font-size:11px;color:#ef4444;"><i class="fa fa-exclamation-triangle" style="margin-right:3px;"></i>Belum diisi</span>
+                  <span style="font-size:11px;color:#ef4444;display:flex;align-items:center;gap:4px;"><i class="fa fa-exclamation-triangle"></i> Belum diisi</span>
                   <?php endif; ?>
                   <?php if ($row['jersey_size']): ?>
-                  <div style="margin-top:4px;">
-                    <span style="font-size:11px;background:rgba(249,115,22,0.1);color:var(--primary);padding:2px 8px;border-radius:6px;font-weight:700;">
-                      <?= sanitize($row['jersey_size']) ?>
-                    </span>
-                  </div>
+                  <span class="jersey-pill"><?= sanitize($row['jersey_size']) ?></span>
                   <?php endif; ?>
                 </td>
                 <td>
-                  <span class="status-badge" style="background:<?= $statusColor ?>22;color:<?= $statusColor ?>;border:1px solid <?= $statusColor ?>44;">
-                    <?= $sl[$row['shipping_status']] ?? '-' ?>
-                  </span>
+                  <span class="ss-badge <?= $badgeClass ?>"><?= $ssLabel[$row['shipping_status']] ?? '-' ?></span>
                   <?php if ($row['shipped_at']): ?>
-                  <div style="font-size:10px;color:var(--gray-light);margin-top:3px;"><?= $row['shipped_at'] ?></div>
+                  <div class="cell-sub" style="margin-top:4px;"><?= $row['shipped_at'] ?></div>
                   <?php endif; ?>
                 </td>
-                <td style="font-size:12px;">
+                <td>
                   <?php if ($row['courier']): ?>
-                  <div style="color:var(--gray-light);"><?= sanitize($row['courier']) ?></div>
+                  <div class="cell-sub"><?= sanitize($row['courier']) ?></div>
                   <?php endif; ?>
                   <?php if ($row['tracking_number']): ?>
-                  <div style="color:var(--primary);font-weight:700;font-family:monospace;font-size:11px;">
-                    <?= sanitize($row['tracking_number']) ?>
+                  <div>
+                    <span class="tracking-num"><?= sanitize($row['tracking_number']) ?></span>
                     <button onclick="copyText('<?= addslashes($row['tracking_number']) ?>')"
-                            style="background:none;border:none;color:var(--gray-light);cursor:pointer;padding:0 2px;font-size:10px;"
-                            title="Copy resi"><i class="fa fa-copy"></i></button>
+                            class="copy-btn" title="Copy resi"><i class="fa fa-copy"></i></button>
                   </div>
-                  <?php else: ?><span style="color:var(--gray-light);">—</span><?php endif; ?>
+                  <?php else: ?><span class="cell-sub">&#8212;</span><?php endif; ?>
                 </td>
                 <td>
                   <button onclick="openUpdateModal(<?= $row['user_id'] ?>,<?= $row['event_id'] ?>,'<?= $row['shipping_status'] ?>','<?= addslashes($row['courier'] ?? '') ?>','<?= addslashes($row['tracking_number'] ?? '') ?>')"
@@ -547,8 +664,8 @@ $exportUrl = '?' . http_build_query(array_filter([
               </tr>
               <?php endforeach; ?>
               <?php if (empty($rows)): ?>
-              <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-light);">
-                <i class="fa fa-box-open" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3;"></i>
+              <tr><td colspan="7" style="text-align:center;padding:48px 20px;color:var(--gray);">
+                <i class="fa fa-box-open" style="font-size:32px;display:block;margin-bottom:10px;opacity:.2;"></i>
                 Tidak ada data.
               </td></tr>
               <?php endif; ?>
@@ -557,26 +674,26 @@ $exportUrl = '?' . http_build_query(array_filter([
         </div>
 
         <?php if ($totalPages > 1): ?>
-        <div class="pagination-custom">
+        <div class="table-pagination">
           <?php for ($i = 1; $i <= min($totalPages, 15); $i++): ?>
           <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&status=<?= urlencode($filterStatus) ?>&category=<?= urlencode($filterCategory) ?>"
-             class="page-btn <?= $i === $page ? 'active' : '' ?>"><?= $i ?></a>
+             class="pg-btn <?= $i === $page ? 'active' : '' ?>"><?= $i ?></a>
           <?php endfor; ?>
         </div>
         <?php endif; ?>
       </div>
 
-      <div style="margin-top:10px;font-size:12px;color:var(--gray-light);padding-bottom:80px;" id="listFooter">
-        Menampilkan <?= count($rows) ?> dari <?= $total ?> peserta
-        <?php if ($filterStatus || $search): ?> (difilter)<?php endif; ?>
+      <div class="list-footer" id="listFooter">
+        Menampilkan <?= count($rows) ?> dari <?= $total ?> peserta<?php if ($filterStatus || $search): ?> (difilter)<?php endif; ?>
       </div>
+
     </div><!-- /page-content -->
   </div>
 </div>
 
 <!-- ══════ BULK ACTION BAR ══════ -->
 <div id="bulkBar" class="bulk-bar-bottom">
-  <div style="display:flex;align-items:center;gap:8px;min-width:120px;">
+  <div style="display:flex;align-items:center;gap:8px;min-width:110px;">
     <div class="kpi-icon" style="background:rgba(249,115,22,0.15);color:var(--primary);width:32px;height:32px;">
       <i class="fa fa-check-square" style="font-size:14px;"></i>
     </div>
@@ -585,7 +702,7 @@ $exportUrl = '?' . http_build_query(array_filter([
       <div style="font-size:10px;color:var(--gray-light);">peserta</div>
     </div>
   </div>
-  <div style="width:1px;height:32px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+  <div style="width:1px;height:32px;background:rgba(255,255,255,0.08);flex-shrink:0;"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
     <button onclick="openBulkModal('preparing')" class="bulk-btn bulk-btn-preparing">
       <i class="fa fa-box"></i> Disiapkan
@@ -653,11 +770,11 @@ $exportUrl = '?' . http_build_query(array_filter([
       <input type="hidden" name="bulk_status" id="bulkStatusInput">
       <input type="hidden" name="selected_ids" id="bulkIdsInput">
       <div class="form-group">
-        <label class="form-label">Kurir <span style="color:var(--gray-light);font-weight:400;">(opsional — kosongkan untuk tidak mengubah)</span></label>
+        <label class="form-label">Kurir <span style="color:var(--gray-light);font-weight:400;">(opsional)</span></label>
         <input type="text" name="bulk_courier" class="form-control-custom" placeholder="JNE, J&T, SiCepat, dll." id="bulkCourierInput">
       </div>
       <div class="form-group" style="margin-bottom:0;" id="bulkTrackingGroup">
-        <label class="form-label">No. Resi <span style="color:var(--gray-light);font-weight:400;">(opsional — gunakan Import CSV untuk resi berbeda)</span></label>
+        <label class="form-label">No. Resi <span style="color:var(--gray-light);font-weight:400;">(opsional)</span></label>
         <input type="text" name="bulk_tracking" class="form-control-custom" placeholder="Kosongkan jika resi berbeda tiap peserta">
       </div>
       <div class="d-flex gap-3 mt-4">
@@ -670,25 +787,24 @@ $exportUrl = '?' . http_build_query(array_filter([
   </div>
 </div>
 
-<!-- ══════ MODAL: Import CSV Resi ══════ -->
+<!-- ══════ MODAL: Import CSV ══════ -->
 <div class="modal-overlay" id="importModal">
   <div class="modal-box" style="max-width:520px;">
     <button class="modal-close" onclick="closeModal('importModal')">&times;</button>
     <h3 class="modal-title"><i class="fa fa-file-import" style="color:var(--primary);margin-right:8px;"></i>Import Resi dari CSV</h3>
 
-    <!-- Format info -->
-    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;">
-      <div style="font-weight:700;color:#60a5fa;margin-bottom:8px;"><i class="fa fa-info-circle" style="margin-right:6px;"></i>Format CSV</div>
+    <div class="info-box info-box-info" style="margin-bottom:20px;">
+      <div style="font-weight:700;color:#60a5fa;margin-bottom:8px;font-size:13px;"><i class="fa fa-info-circle" style="margin-right:6px;"></i>Format CSV</div>
       <div style="font-size:12px;color:var(--gray-light);line-height:1.8;">
         Kolom 1: Nomor telepon <em>atau</em> email peserta<br>
         Kolom 2: Nomor resi<br>
         Kolom 3: Nama kurir <em>(opsional)</em><br>
-        <span style="color:var(--gray-light);font-size:11px;">Baris pertama diabaikan (header).</span>
+        <span style="font-size:11px;">Baris pertama diabaikan (header).</span>
       </div>
       <div style="margin-top:10px;background:rgba(0,0,0,0.3);border-radius:6px;padding:8px 12px;font-family:monospace;font-size:11px;color:#9ca3af;">
         telepon,resi,kurir<br>
         08123456789,JNE12345678,JNE<br>
-        08987654321,JT98765432,J&T
+        08987654321,JT98765432,J&amp;T
       </div>
       <a href="data:text/csv;charset=utf-8,%EF%BB%BFtelepon%2Cresi%2Ckurir%0A08123456789%2CJNE12345678%2CJNE%0A08987654321%2CJT98765432%2CJ%26T"
          download="template-import-resi.csv"
@@ -719,7 +835,7 @@ $exportUrl = '?' . http_build_query(array_filter([
         <label class="form-label">File CSV</label>
         <div class="csv-drop" id="csvDrop" onclick="document.getElementById('csvFile').click()">
           <i class="fa fa-cloud-upload-alt" style="font-size:28px;color:var(--primary);margin-bottom:8px;display:block;"></i>
-          <div style="font-size:14px;color:#fff;">Klik atau drag & drop file CSV</div>
+          <div style="font-size:14px;color:#fff;">Klik atau drag &amp; drop file CSV</div>
           <div id="csvFileName" style="font-size:12px;color:var(--gray-light);margin-top:6px;">Belum ada file dipilih</div>
         </div>
         <input type="file" name="csv_file" id="csvFile" accept=".csv,text/csv" style="display:none;" required>
@@ -737,23 +853,23 @@ $exportUrl = '?' . http_build_query(array_filter([
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
-// ── KPI tile filter ────────────────────────────────────────────────────────────
+// ── KPI filter ─────────────────────────────────────────────────────────────
 function filterByStatus(val) {
   document.getElementById('statusFilter').value = val;
   document.getElementById('filterForm').submit();
 }
 
-// ── Single update modal ────────────────────────────────────────────────────────
+// ── Single update modal ────────────────────────────────────────────────────
 function openUpdateModal(uid, eid, status, courier, tracking) {
-  document.getElementById('upUserId').value  = uid;
-  document.getElementById('upEventId').value = eid;
-  document.getElementById('upStatus').value  = status;
-  document.getElementById('upCourier').value = courier;
-  document.getElementById('upTracking').value= tracking;
+  document.getElementById('upUserId').value   = uid;
+  document.getElementById('upEventId').value  = eid;
+  document.getElementById('upStatus').value   = status;
+  document.getElementById('upCourier').value  = courier;
+  document.getElementById('upTracking').value = tracking;
   openModal('updateModal');
 }
 
-// ── Checkbox / bulk selection ──────────────────────────────────────────────────
+// ── Bulk selection ─────────────────────────────────────────────────────────
 const bulkBar  = document.getElementById('bulkBar');
 const selCount = document.getElementById('selectedCount');
 
@@ -763,14 +879,8 @@ function getSelected() {
 function updateBulkBar() {
   const sel = getSelected();
   selCount.textContent = sel.length;
-  if (sel.length > 0) {
-    bulkBar.classList.add('show');
-    document.getElementById('listFooter').style.paddingBottom = '80px';
-  } else {
-    bulkBar.classList.remove('show');
-    document.getElementById('listFooter').style.paddingBottom = '0';
-  }
-  // Highlight rows
+  bulkBar.classList.toggle('show', sel.length > 0);
+  document.getElementById('listFooter').style.paddingBottom = sel.length > 0 ? '80px' : '0';
   document.querySelectorAll('.row-check').forEach(cb => {
     cb.closest('tr').classList.toggle('selected', cb.checked);
   });
@@ -787,21 +897,20 @@ document.getElementById('checkAll').addEventListener('change', function() {
 });
 document.querySelectorAll('.row-check').forEach(cb => cb.addEventListener('change', updateBulkBar));
 
-// ── Bulk modal ────────────────────────────────────────────────────────────────
-const statusLabels = {preparing:'Disiapkan', shipped:'Dikirim', delivered:'Terkirim'};
+// ── Bulk modal ─────────────────────────────────────────────────────────────
+const statusLabels = { preparing:'Disiapkan', shipped:'Dikirim', delivered:'Terkirim' };
 function openBulkModal(status) {
   const sel = getSelected();
   if (sel.length === 0) { alert('Pilih minimal 1 peserta.'); return; }
-  document.getElementById('bulkStatusInput').value = status;
-  document.getElementById('bulkIdsInput').value    = sel.join(',');
+  document.getElementById('bulkStatusInput').value      = status;
+  document.getElementById('bulkIdsInput').value         = sel.join(',');
   document.getElementById('bulkStatusLabel').textContent = statusLabels[status] || status;
   document.getElementById('bulkCountLabel').textContent  = sel.length + ' peserta';
-  // Hide tracking field for non-shipped statuses
   document.getElementById('bulkTrackingGroup').style.display = status === 'shipped' ? 'block' : 'none';
   openModal('bulkModal');
 }
 
-// ── Import CSV UI ─────────────────────────────────────────────────────────────
+// ── Import CSV UI ──────────────────────────────────────────────────────────
 const csvFile = document.getElementById('csvFile');
 const csvDrop = document.getElementById('csvDrop');
 const csvName = document.getElementById('csvFileName');
@@ -827,10 +936,9 @@ document.getElementById('importForm').addEventListener('submit', () => {
   document.getElementById('importBtn').disabled = true;
 });
 
-// ── Copy tracking number ──────────────────────────────────────────────────────
+// ── Copy tracking ──────────────────────────────────────────────────────────
 function copyText(text) {
   navigator.clipboard?.writeText(text).then(() => {
-    // Visual feedback
     event.target.closest('button').innerHTML = '<i class="fa fa-check" style="color:#22c55e;"></i>';
     setTimeout(() => { event.target.closest('button').innerHTML = '<i class="fa fa-copy"></i>'; }, 1500);
   });

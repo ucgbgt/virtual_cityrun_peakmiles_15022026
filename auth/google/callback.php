@@ -117,5 +117,5 @@ $_SESSION['user_role'] = $user['role'];
 $_SESSION['user_name'] = $user['name'];
 session_regenerate_id(true);
 
-$dest = ($user['role'] === 'admin') ? SITE_URL . '/admin/index.php' : SITE_URL . '/dashboard.php';
-redirect($dest);
+// Login via Google selalu diarahkan ke dashboard user, bukan admin
+redirect(SITE_URL . '/dashboard.php');

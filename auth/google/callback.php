@@ -48,10 +48,37 @@ $name     = $gUser['name']  ?? $email;
 
 $db = getDB();
 
-// Cek apakah user sudah ada (by google_id atau email)
-$stmt = $db->prepare("SELECT * FROM users WHERE google_id = ? OR email = ? LIMIT 1");
-$stmt->execute([$googleId, $email]);
-$user = $stmt->fetch();
+// Cek apakah kolom google_id sudah ada di tabel users
+$hasGoogleIdCol = false;
+try {
+    $colCheck = $db->query("SHOW COLUMNS FROM users LIKE 'google_id'");
+    $hasGoogleIdCol = ($colCheck && $colCheck->rowCount() > 0);
+} catch (Exception $e) {}
+
+// Tambah kolom jika belum ada (auto-migrate)
+if (!$hasGoogleIdCol) {
+    try {
+        $db->exec("ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''");
+        $db->exec("ALTER TABLE users ADD COLUMN google_id VARCHAR(100) NULL UNIQUE AFTER password_hash");
+        $hasGoogleIdCol = true;
+    } catch (Exception $e) {
+        // Kolom mungkin sudah ada (race condition), abaikan
+        $hasGoogleIdCol = true;
+    }
+}
+
+// Cari user: utamakan by email dulu, lalu by google_id
+$user = null;
+if ($hasGoogleIdCol && $googleId) {
+    $stmt = $db->prepare("SELECT * FROM users WHERE google_id = ? OR email = ? LIMIT 1");
+    $stmt->execute([$googleId, $email]);
+    $user = $stmt->fetch() ?: null;
+}
+if (!$user) {
+    $stmt = $db->prepare("SELECT * FROM users WHERE email = ? LIMIT 1");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch() ?: null;
+}
 
 if ($user) {
     // User sudah ada
@@ -60,14 +87,22 @@ if ($user) {
         redirect(SITE_URL . '/login.php');
     }
     // Tautkan google_id jika belum ada
-    if (!$user['google_id'] && $googleId) {
-        $db->prepare("UPDATE users SET google_id = ? WHERE id = ?")->execute([$googleId, $user['id']]);
+    if ($hasGoogleIdCol && !$user['google_id'] && $googleId) {
+        try {
+            $db->prepare("UPDATE users SET google_id = ? WHERE id = ?")->execute([$googleId, $user['id']]);
+        } catch (Exception $e) {}
     }
 } else {
     // User baru — buat akun otomatis
-    $db->prepare("INSERT INTO users (name, email, password_hash, google_id, role, is_active, created_at)
-                  VALUES (?, ?, '', ?, 'user', 1, NOW())")
-       ->execute([$name, $email, $googleId]);
+    if ($hasGoogleIdCol) {
+        $db->prepare("INSERT INTO users (name, email, password_hash, google_id, role, is_active, created_at)
+                      VALUES (?, ?, '', ?, 'user', 1, NOW())")
+           ->execute([$name, $email, $googleId]);
+    } else {
+        $db->prepare("INSERT INTO users (name, email, password_hash, role, is_active, created_at)
+                      VALUES (?, ?, '', 'user', 1, NOW())")
+           ->execute([$name, $email]);
+    }
 
     $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->execute([$email]);

@@ -168,8 +168,9 @@ $exportParams = http_build_query(array_filter([
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Peserta — PeakMiles Admin</title>
-<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/admin.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -180,47 +181,50 @@ $exportParams = http_build_query(array_filter([
     <div class="topbar">
       <div class="d-flex align-items-center gap-3">
         <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;" class="d-lg-none"><i class="fa fa-bars"></i></button>
-        <div class="topbar-title">Daftar Peserta (<?= $total ?>)</div>
+        <div>
+          <div class="topbar-title">Daftar Peserta</div>
+          <div style="font-size:12px;color:var(--gray-light);"><?= $total ?> peserta terdaftar</div>
+        </div>
       </div>
       <div class="d-flex gap-2">
         <a href="<?= SITE_URL ?>/admin/participants-add" class="btn-primary-custom btn-sm-custom">
-          <i class="fa fa-user-plus"></i> Tambah Peserta
+          <i class="fa fa-user-plus"></i><span class="d-none d-sm-inline"> Tambah</span>
         </a>
         <a href="?<?= $exportParams ?>" class="btn-outline-custom btn-sm-custom">
-          <i class="fa fa-file-csv"></i> Export CSV
+          <i class="fa fa-file-csv"></i><span class="d-none d-sm-inline"> Export</span>
         </a>
       </div>
     </div>
 
-
     <div class="page-content">
-      <div class="form-card mb-4">
-        <form method="GET" class="row g-3">
-          <div class="col-md-3">
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <form method="GET" class="row g-2 align-items-end">
+          <div class="col-lg-3 col-md-6">
             <input type="text" name="search" class="form-control-custom" placeholder="Cari nama / email..." value="<?= sanitize($search) ?>">
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3 col-6">
             <select name="category" class="form-control-custom">
               <option value="">Semua Kategori</option>
               <option value="10K" <?= $filterCategory === '10K' ? 'selected' : '' ?>>10K</option>
               <option value="21K" <?= $filterCategory === '21K' ? 'selected' : '' ?>>21K</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3 col-6">
             <select name="status" class="form-control-custom">
               <option value="">Semua Status</option>
               <option value="active" <?= $filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
               <option value="finisher" <?= $filterStatus === 'finisher' ? 'selected' : '' ?>>Finisher</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-4 col-6">
             <select name="payment" class="form-control-custom">
               <option value="">Status Bayar</option>
               <option value="paid" <?= $filterPayment === 'paid' ? 'selected' : '' ?>>Aktif</option>
               <option value="unpaid" <?= $filterPayment === 'unpaid' ? 'selected' : '' ?>>Belum Aktif</option>
             </select>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-4 col-6">
             <select name="shipping" class="form-control-custom">
               <option value="">Status Kirim</option>
               <option value="not_ready">Belum Siap</option>
@@ -229,13 +233,20 @@ $exportParams = http_build_query(array_filter([
               <option value="delivered">Terkirim</option>
             </select>
           </div>
-          <div class="col-md-1">
-            <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:10px 0;"><i class="fa fa-filter"></i></button>
+          <div class="col-lg-1 col-md-4">
+            <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:10px 0;border-radius:10px;font-size:13px;">
+              <i class="fa fa-search"></i>
+            </button>
           </div>
         </form>
       </div>
 
+      <!-- Table -->
       <div class="table-container">
+        <div class="table-header">
+          <div class="table-title"><i class="fa fa-users" style="color:var(--primary);margin-right:8px;font-size:14px;"></i>Peserta</div>
+          <div style="font-size:12px;color:var(--gray-light);">Halaman <?= $page ?> dari <?= $totalPages ?></div>
+        </div>
         <div style="overflow-x:auto;">
           <table class="table-custom">
             <thead>
@@ -243,15 +254,15 @@ $exportParams = http_build_query(array_filter([
                 <th>Peserta</th>
                 <th>Kategori</th>
                 <th>Progres</th>
-                <th>Status Run</th>
+                <th>Status</th>
                 <th>Pembayaran</th>
                 <th>Jersey / Kota</th>
-                <th>Status Kirim</th>
+                <th>Pengiriman</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($participants as $p): 
+              <?php foreach ($participants as $p):
                 $pct = $p['target_km'] > 0 ? min(100, round(($p['total_km_approved']/$p['target_km'])*100)) : 0;
                 $shippingLabels = ['not_ready'=>'Belum','preparing'=>'Disiapkan','shipped'=>'Dikirim','delivered'=>'Terkirim'];
                 $isPaid = ($p['payment_status'] ?? 'unpaid') === 'paid';
@@ -260,39 +271,37 @@ $exportParams = http_build_query(array_filter([
               ?>
               <tr id="row-<?= $p['id'] ?>">
                 <td>
-                  <div style="font-weight:600;color:#fff;"><?= sanitize($p['name']) ?></div>
-                  <div style="font-size:11px;color:var(--gray-light);"><?= sanitize($p['email']) ?></div>
-                  <?php if ($p['phone']): ?><div style="font-size:11px;color:var(--gray-light);"><?= sanitize($p['phone']) ?></div><?php endif; ?>
+                  <div class="cell-name"><?= sanitize($p['name']) ?></div>
+                  <div class="cell-sub"><?= sanitize($p['email']) ?></div>
+                  <?php if ($p['phone']): ?><div class="cell-sub"><?= sanitize($p['phone']) ?></div><?php endif; ?>
                 </td>
-                <td><span class="status-badge" style="background:rgba(249,115,22,0.1);color:var(--primary);"><?= $p['category'] ?></span></td>
+                <td><span class="badge-category"><?= $p['category'] ?></span></td>
                 <td style="min-width:110px;">
                   <div style="font-size:12px;color:var(--gray-light);margin-bottom:4px;"><?= number_format($p['total_km_approved'],2) ?> / <?= $p['target_km'] ?> km</div>
-                  <div class="progress-bar-bg" style="height:6px;">
-                    <div style="height:100%;width:<?= $pct ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:100px;"></div>
+                  <div class="progress-bar-bg" style="height:5px;">
+                    <div style="height:100%;width:<?= $pct ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:100px;transition:width .4s;"></div>
                   </div>
-                  <div style="font-size:11px;color:var(--primary);margin-top:2px;"><?= $pct ?>%</div>
+                  <div style="font-size:11px;color:var(--primary);margin-top:2px;font-weight:600;"><?= $pct ?>%</div>
                 </td>
                 <td><span class="status-badge badge-<?= $p['status'] ?>"><?= $p['status'] === 'finisher' ? '<i class="fa fa-trophy" style="font-size:10px;margin-right:4px;"></i>Finisher' : 'Active' ?></span></td>
                 <td id="pay-badge-<?= $p['id'] ?>">
                   <?php if ($isPaid): ?>
-                    <span class="status-badge" style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);" title="Lunas via Duitku"><i class="fa fa-check-circle" style="font-size:10px;margin-right:3px;"></i>Lunas</span>
+                    <span class="pay-badge pay-badge-paid" title="Lunas via Duitku"><i class="fa fa-check-circle" style="font-size:10px;"></i>Lunas</span>
                   <?php elseif ($isAdminActivated): ?>
-                    <span class="status-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);" title="Diaktifkan admin: <?= sanitize($p['activation_note'] ?? '') ?>"><i class="fa fa-user-shield" style="font-size:10px;margin-right:3px;"></i>Manual</span>
+                    <span class="pay-badge pay-badge-manual" title="Diaktifkan admin: <?= sanitize($p['activation_note'] ?? '') ?>"><i class="fa fa-user-shield" style="font-size:10px;"></i>Manual</span>
                   <?php else: ?>
-                    <span class="status-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);"><i class="fa fa-clock" style="font-size:10px;margin-right:3px;"></i>Belum Bayar</span>
+                    <span class="pay-badge pay-badge-unpaid"><i class="fa fa-clock" style="font-size:10px;"></i>Belum</span>
                   <?php endif; ?>
                 </td>
                 <td style="font-size:12px;color:var(--gray-light);"><?= $p['jersey_size'] ?: '-' ?><br><?= sanitize($p['city'] ?? '-') ?></td>
                 <td><span class="status-badge badge-<?= $p['shipping_status'] ?>"><?= $shippingLabels[$p['shipping_status']] ?? '-' ?></span></td>
                 <td>
                   <?php if (!$isAccountActive): ?>
-                  <button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(34,197,94,0.4);color:#22c55e;"
-                    onclick="activateParticipant(<?= $p['id'] ?>, 1)">
+                  <button class="btn-activate btn-activate-on" onclick="activateParticipant(<?= $p['id'] ?>, 1)">
                     <i class="fa fa-user-check"></i> Aktifkan
                   </button>
                   <?php else: ?>
-                  <button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(239,68,68,0.35);color:#ef4444;"
-                    onclick="activateParticipant(<?= $p['id'] ?>, 0)" <?= $isPaid ? 'title="Sudah lunas via pembayaran"' : '' ?>>
+                  <button class="btn-activate btn-activate-off" onclick="activateParticipant(<?= $p['id'] ?>, 0)" <?= $isPaid ? 'title="Sudah lunas via pembayaran"' : '' ?>>
                     <i class="fa fa-user-times"></i> Nonaktifkan
                   </button>
                   <?php endif; ?>
@@ -300,7 +309,9 @@ $exportParams = http_build_query(array_filter([
               </tr>
               <?php endforeach; ?>
               <?php if (empty($participants)): ?>
-              <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-light);">Tidak ada peserta ditemukan.</td></tr>
+              <tr><td colspan="8" class="empty-state" style="padding:40px;">
+                <i class="fa fa-users"></i>Tidak ada peserta ditemukan.
+              </td></tr>
               <?php endif; ?>
             </tbody>
           </table>
@@ -308,11 +319,16 @@ $exportParams = http_build_query(array_filter([
         <?php if ($totalPages > 1): ?>
         <div class="pagination-custom">
           <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-          <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&category=<?= urlencode($filterCategory) ?>&status=<?= urlencode($filterStatus) ?>" 
+          <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&category=<?= urlencode($filterCategory) ?>&status=<?= urlencode($filterStatus) ?>&payment=<?= urlencode($filterPayment) ?>&shipping=<?= urlencode($filterShipping) ?>"
              class="page-btn <?= $i === $page ? 'active' : '' ?>"><?= $i ?></a>
           <?php endfor; ?>
         </div>
         <?php endif; ?>
+      </div>
+
+      <div style="margin-top:8px;font-size:12px;color:var(--gray-light);">
+        Menampilkan <?= count($participants) ?> dari <?= $total ?> peserta
+        <?php if ($search || $filterCategory || $filterStatus || $filterPayment || $filterShipping): ?> (difilter)<?php endif; ?>
       </div>
     </div>
   </div>
@@ -321,7 +337,6 @@ $exportParams = http_build_query(array_filter([
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
 function activateParticipant(regId, activate) {
-  const action = activate ? 'aktifkan' : 'nonaktifkan';
   let note = '';
   if (activate) {
     note = prompt('Catatan aktivasi (opsional, contoh: "Jalur undangan", "Transfer manual"):') ?? '';
@@ -343,11 +358,11 @@ function activateParticipant(regId, activate) {
       const badgeEl = document.getElementById(`pay-badge-${regId}`);
       const row = document.getElementById(`row-${regId}`);
       if (activate) {
-        badgeEl.innerHTML = '<span class="status-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);"><i class="fa fa-user-shield" style="font-size:10px;margin-right:3px;"></i>Manual</span>';
-        row.querySelector('td:last-child').innerHTML = '<button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(239,68,68,0.35);color:#ef4444;" onclick="activateParticipant(' + regId + ', 0)"><i class="fa fa-user-times"></i> Nonaktifkan</button>';
+        badgeEl.innerHTML = '<span class="pay-badge pay-badge-manual"><i class="fa fa-user-shield" style="font-size:10px;"></i>Manual</span>';
+        row.querySelector('td:last-child').innerHTML = '<button class="btn-activate btn-activate-off" onclick="activateParticipant(' + regId + ', 0)"><i class="fa fa-user-times"></i> Nonaktifkan</button>';
       } else {
-        badgeEl.innerHTML = '<span class="status-badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);"><i class="fa fa-clock" style="font-size:10px;margin-right:3px;"></i>Belum Bayar</span>';
-        row.querySelector('td:last-child').innerHTML = '<button class="btn-outline-custom btn-sm-custom" style="font-size:11px;padding:5px 10px;border-color:rgba(34,197,94,0.4);color:#22c55e;" onclick="activateParticipant(' + regId + ', 1)"><i class="fa fa-user-check"></i> Aktifkan</button>';
+        badgeEl.innerHTML = '<span class="pay-badge pay-badge-unpaid"><i class="fa fa-clock" style="font-size:10px;"></i>Belum</span>';
+        row.querySelector('td:last-child').innerHTML = '<button class="btn-activate btn-activate-on" onclick="activateParticipant(' + regId + ', 1)"><i class="fa fa-user-check"></i> Aktifkan</button>';
       }
     } else {
       alert('Gagal: ' + (data.message || 'Terjadi kesalahan.'));

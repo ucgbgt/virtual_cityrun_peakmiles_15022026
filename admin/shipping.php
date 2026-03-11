@@ -303,76 +303,9 @@ $exportUrl = '?' . http_build_query(array_filter([
 <title>Manajemen Pengiriman — PeakMiles Admin</title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/bootstrap.min.css">
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/admin.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
-<style>
-/* KPI strip — satu baris horizontal */
-.kpi-strip { display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-bottom:12px; }
-.kpi-strip::-webkit-scrollbar { height:3px; }
-.kpi-strip::-webkit-scrollbar-track { background:transparent; }
-.kpi-strip::-webkit-scrollbar-thumb { background:rgba(249,115,22,0.3);border-radius:100px; }
-.kpi-ship {
-  background:var(--surface,#1e1e1e);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:10px 14px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  cursor:pointer;
-  transition:border-color .2s,background .2s;
-  flex-shrink:0;
-  min-width:120px;
-}
-.kpi-ship:hover { background:rgba(249,115,22,0.05); }
-.kpi-ship.active { border-color:var(--primary);background:rgba(249,115,22,0.07); }
-.kpi-ship .kv { font-size:20px;font-weight:800;color:#fff;line-height:1; }
-.kpi-ship .kl { font-size:9px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
-.kpi-icon { width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0; }
-.kpi-progress { flex:1;min-width:160px;padding:10px 14px;gap:8px;cursor:default; }
-/* Jersey size inline */
-.jsize-row { display:flex;align-items:center;gap:0;flex-wrap:wrap; }
-.jsize-item { display:flex;align-items:center;gap:6px;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.07); }
-.jsize-item:last-child { border-right:none; }
-.jsize-item .js-label { font-size:11px;font-weight:700;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px; }
-.jsize-item .js-val { font-size:16px;font-weight:800;color:#fff; }
-.jsize-item.js-has-data .js-val { color:var(--primary); }
-.jsize-item.js-total { background:rgba(255,255,255,0.02);border-radius:8px;border:none;margin-left:4px; }
-.jsize-item.js-total .js-label { color:var(--gray-light); }
-.jsize-item.js-total .js-val { color:var(--gray-light);font-size:14px; }
-/* Bulk bar — fixed inside main-content, tidak overlap sidebar */
-#bulkBar {
-  display:none;
-  position:fixed;
-  bottom:-80px; /* tersembunyi di bawah */
-  left:260px;
-  right:0;
-  background:rgba(18,18,18,0.98);
-  border-top:2px solid rgba(249,115,22,0.5);
-  padding:10px 20px;
-  z-index:50;
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  box-shadow:0 -4px 24px rgba(0,0,0,0.5);
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap;
-  transition:bottom .25s cubic-bezier(0.34,1.56,0.64,1);
-  min-height:60px;
-}
-#bulkBar.show {
-  display:flex;
-  bottom:0;
-}
-@media (max-width:991.98px) {
-  #bulkBar { left:0; }
-}
-/* Row selected highlight */
-tr.selected td { background:rgba(249,115,22,0.06) !important; }
-/* Import drop area */
-.csv-drop { border:2px dashed rgba(249,115,22,0.35);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s; }
-.csv-drop:hover,.csv-drop.over { border-color:var(--primary);background:rgba(249,115,22,0.05); }
-</style>
 </head>
 <body>
 <div class="dashboard-layout">
@@ -385,15 +318,15 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
         <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;" class="d-lg-none"><i class="fa fa-bars"></i></button>
         <div>
           <div class="topbar-title">Manajemen Pengiriman</div>
-          <div style="font-size:11px;color:var(--gray-light);"><?= $event ? sanitize($event['name']) : 'Tidak ada event aktif' ?></div>
+          <div style="font-size:12px;color:var(--gray-light);"><?= $event ? sanitize($event['name']) : 'Tidak ada event aktif' ?></div>
         </div>
       </div>
       <div class="d-flex gap-2 flex-wrap">
         <button onclick="openModal('importModal')" class="btn-outline-custom btn-sm-custom">
-          <i class="fa fa-file-import"></i> Import Resi CSV
+          <i class="fa fa-file-import"></i><span class="d-none d-sm-inline"> Import CSV</span>
         </button>
         <a href="<?= $exportUrl ?>" class="btn-outline-custom btn-sm-custom">
-          <i class="fa fa-file-csv"></i> Export CSV
+          <i class="fa fa-file-csv"></i><span class="d-none d-sm-inline"> Export</span>
         </a>
       </div>
     </div>
@@ -458,9 +391,9 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
         </div>
       </div>
 
-      <!-- ══ JERSEY SIZE SUMMARY — satu baris inline ══ -->
-      <div style="background:var(--surface,#1e1e1e);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <!-- ══ JERSEY SIZE SUMMARY ══ -->
+      <div class="jersey-summary">
+        <div class="jersey-summary-label">
           <i class="fa fa-tshirt" style="color:var(--primary);font-size:13px;"></i>
           <span style="font-size:10px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.6px;font-weight:600;">Jersey</span>
         </div>
@@ -485,7 +418,7 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
       </div>
 
       <!-- ══ FILTER BAR ══ -->
-      <div class="form-card mb-3" style="padding:16px;">
+      <div class="filter-bar">
         <form method="GET" class="row g-2 align-items-end" id="filterForm">
           <div class="col-md-4">
             <input type="text" name="search" class="form-control-custom" placeholder="Cari nama / email..." value="<?= sanitize($search) ?>">
@@ -524,6 +457,10 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
 
       <!-- ══ TABLE ══ -->
       <div class="table-container">
+        <div class="table-header">
+          <div class="table-title"><i class="fa fa-shipping-fast" style="color:var(--primary);margin-right:8px;font-size:14px;"></i>Data Pengiriman</div>
+          <div style="font-size:12px;color:var(--gray-light);">Halaman <?= $page ?> dari <?= $totalPages ?> · <?= $total ?> peserta</div>
+        </div>
         <div style="overflow-x:auto;">
           <table class="table-custom" id="shippingTable">
             <thead>
@@ -553,14 +490,14 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
                          style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary);">
                 </td>
                 <td>
-                  <div style="font-weight:600;color:#fff;font-size:13px;"><?= sanitize($row['name']) ?></div>
-                  <div style="font-size:11px;color:var(--gray-light);"><?= sanitize($row['email']) ?></div>
+                  <div class="cell-name"><?= sanitize($row['name']) ?></div>
+                  <div class="cell-sub"><?= sanitize($row['email']) ?></div>
                   <?php if ($row['phone']): ?>
-                  <div style="font-size:11px;color:var(--gray-light);"><?= sanitize($row['phone']) ?></div>
+                  <div class="cell-sub"><?= sanitize($row['phone']) ?></div>
                   <?php endif; ?>
                 </td>
                 <td>
-                  <span class="status-badge" style="background:rgba(249,115,22,0.1);color:var(--primary);"><?= $row['category'] ?></span>
+                  <span class="badge-category"><?= $row['category'] ?></span>
                 </td>
                 <td style="max-width:200px;">
                   <?php if ($hasAddr): ?>
@@ -603,7 +540,7 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
                 </td>
                 <td>
                   <button onclick="openUpdateModal(<?= $row['user_id'] ?>,<?= $row['event_id'] ?>,'<?= $row['shipping_status'] ?>','<?= addslashes($row['courier'] ?? '') ?>','<?= addslashes($row['tracking_number'] ?? '') ?>')"
-                          class="btn-primary-custom btn-sm-custom" style="padding:6px 12px;font-size:11px;width:100%;justify-content:center;">
+                          class="action-btn action-btn-edit" style="width:100%;justify-content:center;">
                     <i class="fa fa-edit"></i> Update
                   </button>
                 </td>
@@ -638,40 +575,29 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
 </div>
 
 <!-- ══════ BULK ACTION BAR ══════ -->
-<div id="bulkBar">
-  <!-- Kiri: info jumlah -->
+<div id="bulkBar" class="bulk-bar-bottom">
   <div style="display:flex;align-items:center;gap:8px;min-width:120px;">
-    <div style="width:32px;height:32px;border-radius:8px;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;">
-      <i class="fa fa-check-square" style="color:var(--primary);font-size:14px;"></i>
+    <div class="kpi-icon" style="background:rgba(249,115,22,0.15);color:var(--primary);width:32px;height:32px;">
+      <i class="fa fa-check-square" style="font-size:14px;"></i>
     </div>
     <div>
       <div style="font-size:15px;font-weight:700;color:#fff;line-height:1;"><span id="selectedCount">0</span> dipilih</div>
       <div style="font-size:10px;color:var(--gray-light);">peserta</div>
     </div>
   </div>
-
-  <!-- Divider -->
   <div style="width:1px;height:32px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-
-  <!-- Tengah: tombol aksi -->
   <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
-    <button onclick="openBulkModal('preparing')"
-            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+    <button onclick="openBulkModal('preparing')" class="bulk-btn bulk-btn-preparing">
       <i class="fa fa-box"></i> Disiapkan
     </button>
-    <button onclick="openBulkModal('shipped')"
-            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+    <button onclick="openBulkModal('shipped')" class="bulk-btn bulk-btn-shipped">
       <i class="fa fa-shipping-fast"></i> Tandai Dikirim
     </button>
-    <button onclick="openBulkModal('delivered')"
-            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid #22c55e;background:rgba(34,197,94,0.08);color:#22c55e;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+    <button onclick="openBulkModal('delivered')" class="bulk-btn bulk-btn-delivered">
       <i class="fa fa-check-circle"></i> Terkirim
     </button>
   </div>
-
-  <!-- Kanan: batal -->
-  <button onclick="clearSelection()"
-          style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.1);background:transparent;color:var(--gray-light);font-size:13px;cursor:pointer;white-space:nowrap;margin-left:auto;">
+  <button onclick="clearSelection()" class="bulk-btn bulk-btn-cancel" style="margin-left:auto;">
     <i class="fa fa-times"></i> Batal
   </button>
 </div>
@@ -718,7 +644,7 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
   <div class="modal-box" style="max-width:480px;">
     <button class="modal-close" onclick="closeModal('bulkModal')">&times;</button>
     <h3 class="modal-title"><i class="fa fa-layer-group" style="color:var(--primary);margin-right:8px;"></i>Bulk Update Pengiriman</h3>
-    <div id="bulkStatusInfo" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;">
+    <div id="bulkStatusInfo" class="info-box info-box-primary">
       Mengubah status <strong id="bulkStatusLabel"></strong> untuk <strong id="bulkCountLabel"></strong> peserta yang dipilih.
     </div>
     <form method="POST" id="bulkForm">

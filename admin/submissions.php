@@ -43,46 +43,11 @@ $csrf = generateCSRFToken();
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manajemen Submission — PeakMiles</title>
-<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/style.css">
+<link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/admin.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
-<style>
-/* ── Checkbox custom ── */
-.cb-custom {
-  width: 17px; height: 17px;
-  accent-color: var(--primary);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-/* ── Bulk action bar (muncul saat ada yang dicentang) ── */
-#bulkBar {
-  position: sticky; top: 0; z-index: 200;
-  display: none;
-  align-items: center; gap: 12px; flex-wrap: wrap;
-  background: rgba(249,115,22,0.12);
-  border: 1px solid rgba(249,115,22,0.35);
-  border-radius: var(--radius);
-  padding: 12px 18px;
-  margin-bottom: 12px;
-  backdrop-filter: blur(8px);
-  animation: slideDown 0.2s ease;
-}
-#bulkBar.visible { display: flex; }
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-#bulkCount {
-  font-weight: 700; color: var(--primary); font-size: 14px;
-  margin-right: 4px;
-}
-/* ── Row highlight saat dicentang ── */
-.row-checked td { background: rgba(249,115,22,0.06) !important; }
-/* ── th checkbox center ── */
-.th-cb { width: 44px; text-align: center; }
-.td-cb { text-align: center; }
-</style>
 </head>
 <body>
 <div class="dashboard-layout">
@@ -91,9 +56,11 @@ $csrf = generateCSRFToken();
     <div class="topbar">
       <div class="d-flex align-items-center gap-3">
         <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;" class="d-lg-none"><i class="fa fa-bars"></i></button>
-        <div class="topbar-title">Manajemen Submission</div>
+        <div>
+          <div class="topbar-title">Manajemen Submission</div>
+          <div style="font-size:12px;color:var(--gray-light);"><?= $total ?> total · <?= $pendingInPage ?> pending di halaman ini</div>
+        </div>
       </div>
-      <div style="font-size:13px;color:var(--gray-light);"><?= $total ?> total &nbsp;·&nbsp; <?= $pendingInPage ?> pending di halaman ini</div>
     </div>
 
     <div class="page-content">
@@ -104,15 +71,13 @@ $csrf = generateCSRFToken();
       </div>
       <?php endif; ?>
 
-      <!-- Filter -->
-      <div class="form-card mb-4">
-        <form method="GET" class="row g-3 align-items-end">
-          <div class="col-md-5">
-            <label class="form-label">Cari Peserta</label>
-            <input type="text" name="search" class="form-control-custom" placeholder="Nama atau email..." value="<?= sanitize($search) ?>">
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <form method="GET" class="row g-2 align-items-end">
+          <div class="col-lg-5 col-md-6">
+            <input type="text" name="search" class="form-control-custom" placeholder="Cari nama atau email..." value="<?= sanitize($search) ?>">
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Filter Status</label>
+          <div class="col-lg-4 col-md-3">
             <select name="status" class="form-control-custom">
               <option value="">Semua Status</option>
               <option value="pending"  <?= $filterStatus === 'pending'  ? 'selected' : '' ?>>Pending</option>
@@ -120,20 +85,20 @@ $csrf = generateCSRFToken();
               <option value="rejected" <?= $filterStatus === 'rejected' ? 'selected' : '' ?>>Rejected</option>
             </select>
           </div>
-          <div class="col-md-3">
-            <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;">
-              <i class="fa fa-filter"></i> Filter
+          <div class="col-lg-3 col-md-3">
+            <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:10px 0;border-radius:10px;font-size:13px;">
+              <i class="fa fa-search"></i> Cari
             </button>
           </div>
         </form>
       </div>
 
       <!-- Quick filter tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <div class="filter-tabs">
         <?php $tabs = [''=>'Semua','pending'=>'Pending','approved'=>'Approved','rejected'=>'Rejected'];
         foreach ($tabs as $val => $label): ?>
         <a href="?status=<?= $val ?>&search=<?= urlencode($search) ?>"
-           class="<?= $filterStatus === $val ? 'btn-primary-custom' : 'btn-outline-custom' ?> btn-sm-custom">
+           class="filter-tab <?= $filterStatus === $val ? 'active' : '' ?>">
           <?= $label ?>
         </a>
         <?php endforeach; ?>
@@ -142,25 +107,19 @@ $csrf = generateCSRFToken();
       <!-- ══════════════════════════════════════════
            BULK ACTION BAR (muncul saat ada pilihan)
            ══════════════════════════════════════════ -->
-      <div id="bulkBar">
-        <i class="fa fa-layer-group" style="color:var(--primary);font-size:18px;"></i>
-        <span id="bulkCount">0</span>
+      <div id="bulkBar" class="bulk-bar-top">
+        <i class="fa fa-layer-group" style="color:var(--primary);font-size:16px;"></i>
+        <span id="bulkCount" class="bulk-count">0</span>
         <span style="color:var(--gray-light);font-size:13px;">submission dipilih</span>
 
         <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
-          <button onclick="bulkApprove()"
-                  class="btn-success-custom"
-                  style="padding:8px 20px;font-size:13px;border-radius:var(--radius);display:flex;align-items:center;gap:6px;">
-            <i class="fa fa-check-double"></i> Approve Semua Terpilih
+          <button onclick="bulkApprove()" class="bulk-btn bulk-btn-delivered">
+            <i class="fa fa-check-double"></i> Approve Terpilih
           </button>
-          <button onclick="openModal('bulkRejectModal')"
-                  class="btn-danger-custom"
-                  style="padding:8px 20px;font-size:13px;border-radius:var(--radius);display:flex;align-items:center;gap:6px;">
-            <i class="fa fa-times-circle"></i> Reject Semua Terpilih
+          <button onclick="openModal('bulkRejectModal')" class="bulk-btn" style="background:var(--danger);color:#fff;">
+            <i class="fa fa-times-circle"></i> Reject Terpilih
           </button>
-          <button onclick="clearSelection()"
-                  style="background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--gray-light);
-                         padding:8px 14px;font-size:13px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <button onclick="clearSelection()" class="bulk-btn bulk-btn-cancel">
             <i class="fa fa-times"></i> Batal
           </button>
         </div>
@@ -168,8 +127,8 @@ $csrf = generateCSRFToken();
 
       <!-- Tabel -->
       <div class="table-container">
-        <div class="table-header" style="align-items:center;">
-          <div class="table-title">Daftar Submission</div>
+        <div class="table-header">
+          <div class="table-title"><i class="fa fa-file-upload" style="color:var(--primary);margin-right:8px;font-size:14px;"></i>Daftar Submission</div>
           <?php if ($pendingInPage > 0): ?>
           <div style="display:flex;align-items:center;gap:10px;">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--gray-light);font-size:13px;user-select:none;">
@@ -226,8 +185,8 @@ $csrf = generateCSRFToken();
 
                 <!-- Peserta -->
                 <td>
-                  <div style="font-weight:600;color:#fff;"><?= sanitize($sub['user_name']) ?></div>
-                  <div style="font-size:11px;color:var(--gray-light);"><?= sanitize($sub['email']) ?></div>
+                  <div class="cell-name"><?= sanitize($sub['user_name']) ?></div>
+                  <div class="cell-sub"><?= sanitize($sub['email']) ?></div>
                 </td>
 
                 <!-- Jarak + edit -->
@@ -260,12 +219,10 @@ $csrf = generateCSRFToken();
                 <td>
                   <?php if ($isPending): ?>
                   <div class="d-flex gap-1" style="flex-wrap:wrap;">
-                    <button onclick="approveOne(<?= $sub['id'] ?>)" class="btn-success-custom"
-                            style="padding:5px 10px;font-size:11px;" title="Approve submission ini">
+                    <button onclick="approveOne(<?= $sub['id'] ?>)" class="action-btn action-btn-approve" title="Approve">
                       <i class="fa fa-check"></i>
                     </button>
-                    <button onclick="showRejectModal(<?= $sub['id'] ?>)" class="btn-danger-custom"
-                            style="padding:5px 10px;font-size:11px;" title="Reject submission ini">
+                    <button onclick="showRejectModal(<?= $sub['id'] ?>)" class="action-btn action-btn-reject" title="Reject">
                       <i class="fa fa-times"></i>
                     </button>
                   </div>
@@ -460,7 +417,8 @@ function syncUI() {
   const bulkBar = document.getElementById('bulkBar');
 
   document.getElementById('bulkCount').textContent = count;
-  bulkBar.classList.toggle('visible', count > 0);
+  if (count > 0) { bulkBar.style.display = 'flex'; bulkBar.classList.add('visible'); }
+  else { bulkBar.style.display = 'none'; bulkBar.classList.remove('visible'); }
 
   // Sinkron state checkbox header
   const allCbs   = document.querySelectorAll('.row-cb');

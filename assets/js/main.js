@@ -1,6 +1,88 @@
 // PeakMiles - Main JavaScript
 
+// ── Sidebar: global functions exposed on window so any inline onclick also works ──
+window._sidebarOverlay = null;
+
+function _getSidebarOverlay() {
+  if (!window._sidebarOverlay) {
+    window._sidebarOverlay = document.getElementById('sidebarOverlay');
+    if (!window._sidebarOverlay) {
+      window._sidebarOverlay = document.createElement('div');
+      window._sidebarOverlay.id = 'sidebarOverlay';
+      window._sidebarOverlay.className = 'sidebar-overlay';
+      document.body.appendChild(window._sidebarOverlay);
+      window._sidebarOverlay.addEventListener('click', window.closeSidebar);
+    }
+  }
+  return window._sidebarOverlay;
+}
+
+window.openSidebar = function() {
+  const sb = document.getElementById('sidebar');
+  const ov = _getSidebarOverlay();
+  if (sb) sb.classList.add('open');
+  if (ov) ov.classList.add('active');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeSidebar = function() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  if (sb) sb.classList.remove('open');
+  if (ov) ov.classList.remove('active');
+  document.body.style.overflow = '';
+};
+
+window.toggleSidebar = function() {
+  const sb = document.getElementById('sidebar');
+  if (!sb) return;
+  sb.classList.contains('open') ? window.closeSidebar() : window.openSidebar();
+};
+
+// Event delegation: catches click even when e.target is a child <i> icon
+document.addEventListener('click', function(e) {
+  // Toggle button — use closest() to handle click on child <i> icon
+  if (e.target.closest('#sidebarToggle')) {
+    e.preventDefault();
+    window.toggleSidebar();
+    return;
+  }
+  // Clicking outside an open sidebar (not on overlay — overlay has its own handler)
+  const sb = document.getElementById('sidebar');
+  if (sb && sb.classList.contains('open')) {
+    if (!sb.contains(e.target) && !e.target.closest('#sidebarToggle')) {
+      window.closeSidebar();
+    }
+  }
+});
+
+// Swipe-left on sidebar to close
+(function() {
+  let tx = 0;
+  document.addEventListener('touchstart', (e) => {
+    const sb = document.getElementById('sidebar');
+    if (sb && sb.contains(e.target)) tx = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    const sb = document.getElementById('sidebar');
+    if (sb && sb.classList.contains('open') && e.changedTouches[0].clientX - tx < -50) {
+      window.closeSidebar();
+    }
+  }, { passive: true });
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialise sidebar overlay immediately on pages with sidebar
+  if (document.getElementById('sidebar')) {
+    _getSidebarOverlay();
+    // Close sidebar nav links on mobile tap
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth < 992) window.closeSidebar();
+      });
+    });
+  }
+
   // FAQ Toggle
   document.querySelectorAll('.faq-question').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -33,58 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const navbar = document.querySelector('.navbar');
   if (navbar) {
     window.addEventListener('scroll', () => {
-      navbar.style.background = window.scrollY > 50 
-        ? 'rgba(15,15,15,0.98)' 
+      navbar.style.background = window.scrollY > 50
+        ? 'rgba(15,15,15,0.98)'
         : 'rgba(15,15,15,0.95)';
-    });
-  }
-
-  // Mobile sidebar toggle with overlay
-  const sidebarToggle = document.getElementById('sidebarToggle');
-  const sidebar      = document.getElementById('sidebar');
-  if (sidebarToggle && sidebar) {
-    // Ensure overlay exists once
-    let overlay = document.getElementById('sidebarOverlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'sidebarOverlay';
-      overlay.className = 'sidebar-overlay';
-      document.body.appendChild(overlay);
-    }
-
-    const openSidebar = () => {
-      sidebar.classList.add('open');
-      overlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    };
-    const closeSidebar = () => {
-      sidebar.classList.remove('open');
-      overlay.classList.remove('active');
-      document.body.style.overflow = '';
-    };
-
-    // Use currentTarget (the button itself, not a child icon) to avoid e.target === <i> bug
-    sidebarToggle.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-    });
-
-    // Clicking the dark overlay closes sidebar
-    overlay.addEventListener('click', closeSidebar);
-
-    // Swipe-right on sidebar closes it (touch UX)
-    let touchStartX = 0;
-    sidebar.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
-    sidebar.addEventListener('touchend', (e) => {
-      if (e.changedTouches[0].clientX - touchStartX < -60) closeSidebar();
-    }, { passive: true });
-
-    // Close when a nav link is tapped on mobile
-    sidebar.querySelectorAll('.sidebar-link').forEach(link => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth < 992) closeSidebar();
-      });
     });
   }
 

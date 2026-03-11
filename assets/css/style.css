@@ -925,6 +925,29 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.2; }
 }
 .sidebar-overlay.active { display: block; }
 
+/* ===== SIDEBAR TOGGLE BUTTON ===== */
+#sidebarToggle {
+  /* Minimum 44×44px touch target (WCAG) */
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 190; /* above overlay (170) and topbar (180) */
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0 10px;
+  flex-shrink: 0;
+  /* Transparent hit-area extension */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#sidebarToggle:hover,
+#sidebarToggle:active { background: rgba(255,255,255,0.08); }
+/* Ensure inner icon doesn't steal pointer events */
+#sidebarToggle i { pointer-events: none; }
+
 /* ===== RESPONSIVE ===== */
 
 /* Prevent horizontal scroll globally — main fix */

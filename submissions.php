@@ -204,7 +204,7 @@ $csrf = generateCSRFToken();
         </div>
         <div class="col-5">
           <div class="form-group">
-            <label class="form-label">Waktu</label>
+            <label class="form-label">Waktu <span style="color:var(--gray-light);font-weight:400;">(cth: 00:45)</span></label>
             <input type="time" name="run_time" class="form-control-custom" required>
           </div>
         </div>

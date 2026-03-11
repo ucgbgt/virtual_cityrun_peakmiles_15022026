@@ -16,29 +16,43 @@ $approvedSubs       = $db->query("SELECT COUNT(*) FROM run_submissions WHERE sta
 $rejectedSubs       = $db->query("SELECT COUNT(*) FROM run_submissions WHERE status='rejected'")->fetchColumn();
 $totalKmApproved    = $db->query("SELECT COALESCE(SUM(distance_km),0) FROM run_submissions WHERE status='approved'")->fetchColumn();
 
+// ── Auto-migrate kolom admin_activated jika belum ada ────────────────────────
+try {
+    $colCheck = $db->query("SHOW COLUMNS FROM registrations LIKE 'admin_activated'");
+    if ($colCheck->rowCount() === 0) {
+        $db->exec("ALTER TABLE registrations
+            ADD COLUMN admin_activated TINYINT(1) NOT NULL DEFAULT 0 AFTER payment_status,
+            ADD COLUMN activated_by INT NULL,
+            ADD COLUMN activated_at DATETIME NULL,
+            ADD COLUMN activation_note VARCHAR(255) NULL");
+    }
+} catch (Exception $e) { /* abaikan jika gagal */ }
+
 // ── Revenue & status akun ─────────────────────────────────────────────────────
 $revenueStats = ['total'=>0,'paid_count'=>0,'manual_count'=>0,'unpaid_count'=>0,
                  'rev_10k'=>0,'rev_21k'=>0,'count_10k'=>0,'count_21k'=>0];
 if ($event) {
-    $stmt = $db->prepare("
-        SELECT
-            COUNT(*)                                                                               AS total,
-            SUM(CASE WHEN r.payment_status='paid' THEN 1 ELSE 0 END)                              AS paid_count,
-            SUM(CASE WHEN r.admin_activated=1 AND r.payment_status!='paid' THEN 1 ELSE 0 END)     AS manual_count,
-            SUM(CASE WHEN r.payment_status='unpaid'
-                     AND (r.admin_activated IS NULL OR r.admin_activated=0) THEN 1 ELSE 0 END)   AS unpaid_count,
-            SUM(CASE WHEN r.payment_status='paid' AND r.category='10K'
-                     THEN COALESCE(e.fee_10k,0) ELSE 0 END)                                       AS rev_10k,
-            SUM(CASE WHEN r.payment_status='paid' AND r.category='21K'
-                     THEN COALESCE(e.fee_21k,0) ELSE 0 END)                                       AS rev_21k,
-            SUM(CASE WHEN r.category='10K' THEN 1 ELSE 0 END)                                     AS count_10k,
-            SUM(CASE WHEN r.category='21K' THEN 1 ELSE 0 END)                                     AS count_21k
-        FROM registrations r
-        JOIN events e ON r.event_id = e.id
-        WHERE r.event_id = ?
-    ");
-    $stmt->execute([$event['id']]);
-    $revenueStats = $stmt->fetch(PDO::FETCH_ASSOC) ?: $revenueStats;
+    try {
+        $stmt = $db->prepare("
+            SELECT
+                COUNT(*)                                                                               AS total,
+                SUM(CASE WHEN r.payment_status='paid' THEN 1 ELSE 0 END)                              AS paid_count,
+                SUM(CASE WHEN r.admin_activated=1 AND r.payment_status!='paid' THEN 1 ELSE 0 END)     AS manual_count,
+                SUM(CASE WHEN r.payment_status='unpaid'
+                         AND (r.admin_activated IS NULL OR r.admin_activated=0) THEN 1 ELSE 0 END)   AS unpaid_count,
+                SUM(CASE WHEN r.payment_status='paid' AND r.category='10K'
+                         THEN COALESCE(e.fee_10k,0) ELSE 0 END)                                       AS rev_10k,
+                SUM(CASE WHEN r.payment_status='paid' AND r.category='21K'
+                         THEN COALESCE(e.fee_21k,0) ELSE 0 END)                                       AS rev_21k,
+                SUM(CASE WHEN r.category='10K' THEN 1 ELSE 0 END)                                     AS count_10k,
+                SUM(CASE WHEN r.category='21K' THEN 1 ELSE 0 END)                                     AS count_21k
+            FROM registrations r
+            JOIN events e ON r.event_id = e.id
+            WHERE r.event_id = ?
+        ");
+        $stmt->execute([$event['id']]);
+        $revenueStats = $stmt->fetch(PDO::FETCH_ASSOC) ?: $revenueStats;
+    } catch (Exception $e) { /* kolom belum ada, gunakan default 0 */ }
 }
 
 // ── 7-hari: registrasi ────────────────────────────────────────────────────────
@@ -74,63 +88,69 @@ if ($event) {
 // ── Distribusi progress peserta ───────────────────────────────────────────────
 $progressDist = ['p0' => 0, 'p25' => 0, 'p50' => 0, 'p75' => 0, 'p100' => 0];
 if ($event) {
-    $stmt = $db->prepare("
-        SELECT r.target_km, r.status, COALESCE(SUM(rs.distance_km),0) AS total_km
-        FROM registrations r
-        LEFT JOIN run_submissions rs
-            ON rs.user_id=r.user_id AND rs.event_id=r.event_id AND rs.status='approved'
-        WHERE r.event_id=?
-        GROUP BY r.id, r.target_km, r.status
-    ");
-    $stmt->execute([$event['id']]);
-    foreach ($stmt->fetchAll() as $p) {
-        if ($p['status'] === 'finisher' || ($p['target_km'] > 0 && $p['total_km'] >= $p['target_km'])) {
-            $progressDist['p100']++;
-        } elseif ($p['target_km'] > 0) {
-            $pct = $p['total_km'] / $p['target_km'];
-            if      ($pct < 0.25) $progressDist['p0']++;
-            elseif  ($pct < 0.50) $progressDist['p25']++;
-            elseif  ($pct < 0.75) $progressDist['p50']++;
-            else                  $progressDist['p75']++;
-        } else {
-            $progressDist['p0']++;
+    try {
+        $stmt = $db->prepare("
+            SELECT r.target_km, r.status, COALESCE(SUM(rs.distance_km),0) AS total_km
+            FROM registrations r
+            LEFT JOIN run_submissions rs
+                ON rs.user_id=r.user_id AND rs.event_id=r.event_id AND rs.status='approved'
+            WHERE r.event_id=?
+            GROUP BY r.id, r.target_km, r.status
+        ");
+        $stmt->execute([$event['id']]);
+        foreach ($stmt->fetchAll() as $p) {
+            if ($p['status'] === 'finisher' || ($p['target_km'] > 0 && $p['total_km'] >= $p['target_km'])) {
+                $progressDist['p100']++;
+            } elseif ($p['target_km'] > 0) {
+                $pct = $p['total_km'] / $p['target_km'];
+                if      ($pct < 0.25) $progressDist['p0']++;
+                elseif  ($pct < 0.50) $progressDist['p25']++;
+                elseif  ($pct < 0.75) $progressDist['p50']++;
+                else                  $progressDist['p75']++;
+            } else {
+                $progressDist['p0']++;
+            }
         }
-    }
+    } catch (Exception $e) { /* abaikan */ }
 }
 
 // ── Leaderboard top 5 ─────────────────────────────────────────────────────────
 $leaderboard = [];
 if ($event) {
-    $stmt = $db->prepare("
-        SELECT u.name, r.category, r.target_km, r.status,
-            COALESCE(SUM(rs.distance_km),0) AS total_km
-        FROM registrations r
-        JOIN users u ON r.user_id=u.id
-        LEFT JOIN run_submissions rs
-            ON rs.user_id=r.user_id AND rs.event_id=r.event_id AND rs.status='approved'
-        WHERE r.event_id=?
-        GROUP BY r.id, u.name, r.category, r.target_km, r.status
-        ORDER BY total_km DESC
-        LIMIT 5
-    ");
-    $stmt->execute([$event['id']]);
-    $leaderboard = $stmt->fetchAll();
+    try {
+        $stmt = $db->prepare("
+            SELECT u.name, r.category, r.target_km, r.status,
+                COALESCE(SUM(rs.distance_km),0) AS total_km
+            FROM registrations r
+            JOIN users u ON r.user_id=u.id
+            LEFT JOIN run_submissions rs
+                ON rs.user_id=r.user_id AND rs.event_id=r.event_id AND rs.status='approved'
+            WHERE r.event_id=?
+            GROUP BY r.id, u.name, r.category, r.target_km, r.status
+            ORDER BY total_km DESC
+            LIMIT 5
+        ");
+        $stmt->execute([$event['id']]);
+        $leaderboard = $stmt->fetchAll();
+    } catch (Exception $e) { /* abaikan */ }
 }
 
 // ── Status pengiriman ─────────────────────────────────────────────────────────
 $shippingStats = ['not_ready' => 0, 'preparing' => 0, 'shipped' => 0, 'delivered' => 0];
 if ($event) {
-    $stmt = $db->prepare("
-        SELECT COALESCE(s.status,'not_ready') AS status, COUNT(*) AS c
-        FROM registrations r
-        LEFT JOIN shipping s ON s.user_id=r.user_id AND s.event_id=r.event_id
-        WHERE r.event_id=?
-        GROUP BY COALESCE(s.status,'not_ready')
-    ");
-    $stmt->execute([$event['id']]);
-    foreach ($stmt->fetchAll() as $s) {
-        if (isset($shippingStats[$s['status']])) $shippingStats[$s['status']] = (int)$s['c'];
-    }
+    try {
+        $stmt = $db->prepare("
+            SELECT COALESCE(s.status,'not_ready') AS status, COUNT(*) AS c
+            FROM registrations r
+            LEFT JOIN shipping s ON s.user_id=r.user_id AND s.event_id=r.event_id
+            WHERE r.event_id=?
+            GROUP BY COALESCE(s.status,'not_ready')
+        ");
+        $stmt->execute([$event['id']]);
+        foreach ($stmt->fetchAll() as $s) {
+            if (isset($shippingStats[$s['status']])) $shippingStats[$s['status']] = (int)$s['c'];
+        }
+    } catch (Exception $e) { /* abaikan */ }
 }
 
 // ── Event countdown & progress ────────────────────────────────────────────────

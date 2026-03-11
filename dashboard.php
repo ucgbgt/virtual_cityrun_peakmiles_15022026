@@ -399,7 +399,7 @@ $csrf = generateCSRFToken();
       </div>
     </div>
 
-    <div id="joinError" style="display:none;" class="alert-custom alert-danger" style="margin-bottom:12px;"></div>
+    <div id="joinError" class="alert-custom alert-danger" style="display:none;margin-bottom:12px;"></div>
     <div id="joinLoading" style="display:none;text-align:center;padding:12px;">
       <i class="fa fa-spinner fa-spin" style="color:var(--primary);font-size:22px;"></i>
       <div style="color:var(--gray-light);font-size:13px;margin-top:6px;">Mendaftarkan...</div>
@@ -411,6 +411,42 @@ $csrf = generateCSRFToken();
     <p style="text-align:center;color:var(--gray-light);font-size:12px;margin-top:12px;">
       Setelah daftar, selesaikan pembayaran untuk mengaktifkan akun.
     </p>
+  </div>
+</div>
+
+<!-- JOIN SUCCESS + PAYMENT MODAL -->
+<div class="modal-overlay" id="joinSuccessModal">
+  <div class="modal-box" style="max-width:480px;text-align:center;">
+    <div style="width:72px;height:72px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border:2px solid rgba(34,197,94,0.3);">
+      <i class="fa fa-check" style="font-size:32px;color:var(--success);"></i>
+    </div>
+    <h3 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;">Pendaftaran Berhasil! 🎉</h3>
+    <p style="color:var(--gray-light);font-size:14px;line-height:1.7;margin-bottom:4px;">
+      Kamu telah terdaftar di kategori <strong id="joinSuccessCat" style="color:var(--primary);"></strong>.
+    </p>
+    <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px;margin:16px 0;">
+      <div style="font-size:12px;color:var(--gray-light);margin-bottom:4px;">Biaya Pendaftaran</div>
+      <div id="joinSuccessFee" style="font-size:24px;font-weight:800;color:var(--primary);"></div>
+    </div>
+    <p style="color:var(--gray-light);font-size:13px;margin-bottom:20px;">
+      Akun kamu <strong style="color:var(--warning);">belum aktif</strong> sebelum melakukan pembayaran. Bayar sekarang atau nanti melalui dashboard.
+    </p>
+
+    <div id="joinPayLoading" style="padding:20px 0;">
+      <i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i>
+      <div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Memuat metode pembayaran...</div>
+    </div>
+    <div id="joinPayError" class="alert-custom alert-danger" style="display:none;"></div>
+    <div id="joinPayMethods" style="display:none;text-align:left;margin-bottom:16px;max-height:240px;overflow-y:auto;"></div>
+
+    <div id="joinPayButtons" style="display:none;flex-direction:column;gap:12px;">
+      <button onclick="joinBayarSekarang()" id="btnJoinBayar" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;" disabled>
+        <i class="fa fa-credit-card"></i> Lanjut Bayar — <span id="joinBayarFeeLabel"></span>
+      </button>
+      <button onclick="window.location.reload()" class="btn-outline-custom" style="width:100%;justify-content:center;padding:14px;">
+        <i class="fa fa-clock"></i> Bayar Nanti
+      </button>
+    </div>
   </div>
 </div>
 <?php endif; ?>
@@ -625,7 +661,8 @@ function doPayment() {
 }
 
 // Join Event
-var joinSelectedCategory = null;
+var joinSelectedCategory  = null;
+var joinSelectedPayMethod = '';
 
 function selectJoinCategory(cat) {
   joinSelectedCategory = cat;
@@ -660,7 +697,13 @@ function doJoinEvent() {
     document.getElementById('joinLoading').style.display = 'none';
     if (data.success) {
       closeModal('joinEventModal');
-      window.location.reload();
+      // Tampilkan modal sukses + pilih pembayaran
+      var feeFormatted = 'Rp ' + data.fee.toLocaleString('id-ID');
+      document.getElementById('joinSuccessCat').textContent    = data.category;
+      document.getElementById('joinSuccessFee').textContent    = feeFormatted;
+      document.getElementById('joinBayarFeeLabel').textContent = feeFormatted;
+      openModal('joinSuccessModal');
+      loadJoinPayMethods();
     } else {
       var err = document.getElementById('joinError');
       err.style.display = 'block';
@@ -674,6 +717,87 @@ function doJoinEvent() {
     err.style.display = 'block';
     err.textContent = 'Terjadi kesalahan jaringan.';
     document.getElementById('btnJoin').disabled = false;
+  });
+}
+
+function loadJoinPayMethods() {
+  document.getElementById('joinPayLoading').style.display = 'block';
+  document.getElementById('joinPayMethods').style.display = 'none';
+  document.getElementById('joinPayButtons').style.display = 'none';
+  document.getElementById('joinPayError').style.display   = 'none';
+  joinSelectedPayMethod = '';
+
+  fetch('<?= SITE_URL ?>/api/payment-methods.php')
+    .then(r => r.json())
+    .then(function(data) {
+      document.getElementById('joinPayLoading').style.display = 'none';
+      if (data.success && data.groups && data.groups.length > 0) {
+        var container = document.getElementById('joinPayMethods');
+        renderGroupedMethods(data.groups, container, 'joinMethod', 'selectJoinMethod');
+        container.style.display = 'block';
+        document.getElementById('joinPayButtons').style.display = 'flex';
+      } else {
+        var errEl = document.getElementById('joinPayError');
+        errEl.style.display = 'block';
+        errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + (data.message || 'Tidak ada metode tersedia.');
+        document.getElementById('joinPayButtons').style.display = 'flex';
+      }
+    })
+    .catch(function() {
+      document.getElementById('joinPayLoading').style.display = 'none';
+      var errEl = document.getElementById('joinPayError');
+      errEl.style.display = 'block';
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Gagal memuat metode pembayaran.';
+      document.getElementById('joinPayButtons').style.display = 'flex';
+    });
+}
+
+function selectJoinMethod(code, el) {
+  joinSelectedPayMethod = code;
+  document.querySelectorAll('#joinPayMethods .pay-method-item').forEach(function(item) {
+    item.style.borderColor = 'var(--border)';
+    item.style.background  = '';
+  });
+  el.style.borderColor = 'var(--primary)';
+  el.style.background  = 'rgba(249,115,22,0.08)';
+  document.getElementById('btnJoinBayar').disabled = false;
+}
+
+function joinBayarSekarang() {
+  if (!joinSelectedPayMethod) return;
+  document.getElementById('joinPayMethods').style.display = 'none';
+  document.getElementById('joinPayButtons').style.display = 'none';
+  document.getElementById('joinPayError').style.display   = 'none';
+  document.getElementById('joinPayLoading').style.display = 'block';
+  document.getElementById('joinPayLoading').innerHTML =
+    '<i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--primary);"></i>' +
+    '<div style="color:var(--gray-light);margin-top:8px;font-size:14px;">Menyiapkan pembayaran...</div>';
+
+  fetch('<?= SITE_URL ?>/api/payment-create.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentMethod: joinSelectedPayMethod })
+  })
+  .then(r => r.json())
+  .then(function(data) {
+    if (data.success && data.paymentUrl) {
+      window.location.href = data.paymentUrl;
+    } else {
+      document.getElementById('joinPayLoading').style.display = 'none';
+      document.getElementById('joinPayMethods').style.display = 'block';
+      document.getElementById('joinPayButtons').style.display = 'flex';
+      var errEl = document.getElementById('joinPayError');
+      errEl.style.display = 'block';
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + (data.message || 'Gagal membuat transaksi.');
+    }
+  })
+  .catch(function() {
+    document.getElementById('joinPayLoading').style.display = 'none';
+    document.getElementById('joinPayMethods').style.display = 'block';
+    document.getElementById('joinPayButtons').style.display = 'flex';
+    var errEl = document.getElementById('joinPayError');
+    errEl.style.display = 'block';
+    errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Terjadi kesalahan jaringan.';
   });
 }
 

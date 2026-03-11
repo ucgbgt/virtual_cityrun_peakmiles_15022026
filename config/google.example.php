@@ -1,11 +1,10 @@
 <?php
-// Salin file ini menjadi config/google.php dan isi dengan credentials Anda
-// Copy this file to config/google.php and fill in your credentials
+// Salin file ini menjadi config/google.php dan isi credentials Anda
+// Tidak perlu Composer/vendor — menggunakan cURL langsung
 
-define('GOOGLE_CLIENT_ID',     'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com');
-define('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET');
+define('GOOGLE_CLIENT_ID',     'YOUR_CLIENT_ID.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET', 'YOUR_CLIENT_SECRET');
 
-// Redirect URI harus sama persis dengan yang didaftarkan di Google Console
 $_googleHost = $_SERVER['HTTP_HOST'] ?? 'peakmiles.id';
 if ($_googleHost === 'localhost') {
     define('GOOGLE_REDIRECT_URI', 'http://localhost/stridenation/auth/google/callback.php');
@@ -14,16 +13,48 @@ if ($_googleHost === 'localhost') {
 }
 unset($_googleHost);
 
-function getGoogleClient(): Google_Client {
-    require_once __DIR__ . '/../vendor/autoload.php';
+function googleAuthUrl(string $state): string {
+    $params = http_build_query([
+        'client_id'     => GOOGLE_CLIENT_ID,
+        'redirect_uri'  => GOOGLE_REDIRECT_URI,
+        'response_type' => 'code',
+        'scope'         => 'openid email profile',
+        'access_type'   => 'online',
+        'prompt'        => 'select_account',
+        'state'         => $state,
+    ]);
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' . $params;
+}
 
-    $client = new Google_Client();
-    $client->setClientId(GOOGLE_CLIENT_ID);
-    $client->setClientSecret(GOOGLE_CLIENT_SECRET);
-    $client->setRedirectUri(GOOGLE_REDIRECT_URI);
-    $client->addScope('email');
-    $client->addScope('profile');
-    $client->setAccessType('online');
-    $client->setPrompt('select_account');
-    return $client;
+function googleFetchToken(string $code): ?array {
+    $ch = curl_init('https://oauth2.googleapis.com/token');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => http_build_query([
+            'code'          => $code,
+            'client_id'     => GOOGLE_CLIENT_ID,
+            'client_secret' => GOOGLE_CLIENT_SECRET,
+            'redirect_uri'  => GOOGLE_REDIRECT_URI,
+            'grant_type'    => 'authorization_code',
+        ]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    return $response ? json_decode($response, true) : null;
+}
+
+function googleGetUserInfo(string $accessToken): ?array {
+    $ch = curl_init('https://www.googleapis.com/oauth2/v2/userinfo');
+    curl_setopt_array($ch, [
+        CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $accessToken],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    return $response ? json_decode($response, true) : null;
 }

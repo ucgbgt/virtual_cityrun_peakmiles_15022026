@@ -306,9 +306,33 @@ $exportUrl = '?' . http_build_query(array_filter([
 .jsize-pill { background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:6px 12px;text-align:center; }
 .jsize-pill .jv { font-size:18px;font-weight:800;color:var(--primary); }
 .jsize-pill .jl { font-size:10px;color:var(--gray-light); }
-/* Bulk bar */
-#bulkBar { display:none;position:sticky;bottom:0;background:rgba(15,15,15,0.97);border-top:1px solid rgba(249,115,22,0.3);padding:12px 20px;z-index:40;backdrop-filter:blur(8px); }
-#bulkBar.show { display:flex; }
+/* Bulk bar — fixed inside main-content, tidak overlap sidebar */
+#bulkBar {
+  display:none;
+  position:fixed;
+  bottom:-80px; /* tersembunyi di bawah */
+  left:260px;
+  right:0;
+  background:rgba(18,18,18,0.98);
+  border-top:2px solid rgba(249,115,22,0.5);
+  padding:10px 20px;
+  z-index:50;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  box-shadow:0 -4px 24px rgba(0,0,0,0.5);
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  transition:bottom .25s cubic-bezier(0.34,1.56,0.64,1);
+  min-height:60px;
+}
+#bulkBar.show {
+  display:flex;
+  bottom:0;
+}
+@media (max-width:991.98px) {
+  #bulkBar { left:0; }
+}
 /* Row selected highlight */
 tr.selected td { background:rgba(249,115,22,0.06) !important; }
 /* Import drop area */
@@ -569,7 +593,7 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
         <?php endif; ?>
       </div>
 
-      <div style="margin-top:10px;font-size:12px;color:var(--gray-light);">
+      <div style="margin-top:10px;font-size:12px;color:var(--gray-light);padding-bottom:80px;" id="listFooter">
         Menampilkan <?= count($rows) ?> dari <?= $total ?> peserta
         <?php if ($filterStatus || $search): ?> (difilter)<?php endif; ?>
       </div>
@@ -577,25 +601,42 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
   </div>
 </div>
 
-<!-- ══════ BULK ACTION BAR (sticky bottom) ══════ -->
-<div id="bulkBar" class="align-items-center gap-3 flex-wrap">
-  <div style="font-size:13px;color:#fff;">
-    <i class="fa fa-check-square" style="color:var(--primary);margin-right:6px;"></i>
-    <strong id="selectedCount">0</strong> peserta dipilih
+<!-- ══════ BULK ACTION BAR ══════ -->
+<div id="bulkBar">
+  <!-- Kiri: info jumlah -->
+  <div style="display:flex;align-items:center;gap:8px;min-width:120px;">
+    <div style="width:32px;height:32px;border-radius:8px;background:rgba(249,115,22,0.15);display:flex;align-items:center;justify-content:center;">
+      <i class="fa fa-check-square" style="color:var(--primary);font-size:14px;"></i>
+    </div>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#fff;line-height:1;"><span id="selectedCount">0</span> dipilih</div>
+      <div style="font-size:10px;color:var(--gray-light);">peserta</div>
+    </div>
   </div>
-  <div class="d-flex gap-2 flex-wrap">
-    <button onclick="openBulkModal('preparing')" class="btn-outline-custom btn-sm-custom" style="border-color:#f59e0b;color:#f59e0b;">
-      <i class="fa fa-box"></i> Tandai Disiapkan
+
+  <!-- Divider -->
+  <div style="width:1px;height:32px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+
+  <!-- Tengah: tombol aksi -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
+    <button onclick="openBulkModal('preparing')"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid #f59e0b;background:rgba(245,158,11,0.08);color:#f59e0b;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+      <i class="fa fa-box"></i> Disiapkan
     </button>
-    <button onclick="openBulkModal('shipped')" class="btn-primary-custom btn-sm-custom">
+    <button onclick="openBulkModal('shipped')"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
       <i class="fa fa-shipping-fast"></i> Tandai Dikirim
     </button>
-    <button onclick="openBulkModal('delivered')" class="btn-outline-custom btn-sm-custom" style="border-color:#22c55e;color:#22c55e;">
-      <i class="fa fa-check-circle"></i> Tandai Terkirim
+    <button onclick="openBulkModal('delivered')"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid #22c55e;background:rgba(34,197,94,0.08);color:#22c55e;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+      <i class="fa fa-check-circle"></i> Terkirim
     </button>
   </div>
-  <button onclick="clearSelection()" style="background:none;border:none;color:var(--gray-light);cursor:pointer;margin-left:auto;font-size:18px;">
-    <i class="fa fa-times"></i>
+
+  <!-- Kanan: batal -->
+  <button onclick="clearSelection()"
+          style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.1);background:transparent;color:var(--gray-light);font-size:13px;cursor:pointer;white-space:nowrap;margin-left:auto;">
+    <i class="fa fa-times"></i> Batal
   </button>
 </div>
 
@@ -759,11 +800,13 @@ function getSelected() {
 }
 function updateBulkBar() {
   const sel = getSelected();
+  selCount.textContent = sel.length;
   if (sel.length > 0) {
-    selCount.textContent = sel.length;
     bulkBar.classList.add('show');
+    document.getElementById('listFooter').style.paddingBottom = '80px';
   } else {
     bulkBar.classList.remove('show');
+    document.getElementById('listFooter').style.paddingBottom = '0';
   }
   // Highlight rows
   document.querySelectorAll('.row-check').forEach(cb => {

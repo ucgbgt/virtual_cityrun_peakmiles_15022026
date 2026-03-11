@@ -1,0 +1,6 @@
+vendor/
+uploads/submissions/
+certificates/
+.env
+config/database.php
+config/google.php

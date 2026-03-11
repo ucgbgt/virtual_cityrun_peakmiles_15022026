@@ -57,9 +57,14 @@ $activeNav = $activeNav ?? '';
   </nav>
   <div class="sidebar-user">
     <div class="d-flex align-items-center gap-3">
+      <?php if (!empty($currentUser['avatar'])): ?>
+      <img src="<?= AVATAR_URL . sanitize($currentUser['avatar']) ?>" alt="Avatar"
+           style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(249,115,22,0.5);">
+      <?php else: ?>
       <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;">
         <?= strtoupper(substr($currentUser['name'], 0, 1)) ?>
       </div>
+      <?php endif; ?>
       <div class="sidebar-user-info">
         <div class="sidebar-user-name"><?= sanitize($currentUser['name']) ?></div>
         <div class="sidebar-user-role"><?= $currentUser['role'] === 'admin' ? 'Administrator' : 'Peserta' ?></div>

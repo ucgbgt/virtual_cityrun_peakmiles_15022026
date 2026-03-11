@@ -12,8 +12,10 @@ define('SITE_TAGLINE', 'Run Your Way. Anywhere. Anytime.');
 define('NUSATIX_URL', 'https://nusatix.com');
 
 define('UPLOAD_PATH', __DIR__ . '/../uploads/submissions/');
+define('AVATAR_PATH', __DIR__ . '/../uploads/avatars/');
 define('CERT_PATH', __DIR__ . '/../certificates/');
 define('UPLOAD_URL', SITE_URL . '/uploads/submissions/');
+define('AVATAR_URL', SITE_URL . '/uploads/avatars/');
 define('CERT_URL', SITE_URL . '/certificates/');
 
 define('MAX_FILE_SIZE', 10 * 1024 * 1024); // 10MB

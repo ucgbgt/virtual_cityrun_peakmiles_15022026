@@ -90,15 +90,34 @@ $provinces = ['Aceh','Bali','Banten','Bengkulu','DI Yogyakarta','DKI Jakarta','G
         <div class="row g-4">
           <div class="col-lg-4">
             <div class="form-card text-center">
-              <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:32px;color:#fff;margin:0 auto 16px;">
-                <?= strtoupper(substr($user['name'], 0, 1)) ?>
+              <!-- Avatar Upload -->
+              <div style="position:relative;width:100px;height:100px;margin:0 auto 16px;cursor:pointer;" onclick="document.getElementById('avatarInput').click()" title="Klik untuk ganti foto">
+                <?php if (!empty($user['avatar'])): ?>
+                <img id="avatarPreview" src="<?= AVATAR_URL . sanitize($user['avatar']) ?>" alt="Foto Profil"
+                     style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);">
+                <?php else: ?>
+                <div id="avatarInitials" style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:38px;color:#fff;border:3px solid rgba(249,115,22,0.4);">
+                  <?= strtoupper(substr($user['name'], 0, 1)) ?>
+                </div>
+                <img id="avatarPreview" src="" alt="" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);display:none;">
+                <?php endif; ?>
+                <!-- Overlay hover -->
+                <div style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" class="avatar-overlay">
+                  <i class="fa fa-camera" style="color:#fff;font-size:22px;"></i>
+                </div>
               </div>
+              <input type="file" id="avatarInput" name="avatar_file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+              <div id="avatarMsg" style="font-size:12px;margin-bottom:8px;display:none;"></div>
+
               <div style="font-size:18px;font-weight:700;color:#fff;"><?= sanitize($user['name']) ?></div>
               <div style="font-size:13px;color:var(--gray-light);"><?= sanitize($user['email']) ?></div>
               <div class="mt-2">
                 <span class="status-badge" style="background:rgba(249,115,22,0.1);color:var(--primary);">
                   <?= $user['role'] === 'admin' ? 'Administrator' : 'Peserta' ?>
                 </span>
+              </div>
+              <div style="font-size:12px;color:var(--gray-light);margin-top:12px;">
+                <i class="fa fa-camera" style="margin-right:4px;"></i> Klik foto untuk menggantinya
               </div>
             </div>
           </div>
@@ -219,5 +238,89 @@ $provinces = ['Aceh','Bali','Banten','Bengkulu','DI Yogyakarta','DKI Jakarta','G
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
+<script>
+// Avatar hover overlay
+(function() {
+  var wrap = document.querySelector('[onclick="document.getElementById(\'avatarInput\').click()"]');
+  var overlay = wrap ? wrap.querySelector('.avatar-overlay') : null;
+  if (wrap && overlay) {
+    wrap.addEventListener('mouseenter', function() { overlay.style.opacity = '1'; });
+    wrap.addEventListener('mouseleave', function() { overlay.style.opacity = '0'; });
+  }
+})();
+
+document.getElementById('avatarInput').addEventListener('change', function() {
+  var file = this.files[0];
+  if (!file) return;
+
+  var msgEl = document.getElementById('avatarMsg');
+  msgEl.style.display = 'none';
+
+  // Client-side size check (2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    msgEl.style.color = '#ef4444';
+    msgEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Ukuran foto maksimal 2MB.';
+    msgEl.style.display = 'block';
+    this.value = '';
+    return;
+  }
+
+  // Preview sementara
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('avatarPreview');
+    var initials = document.getElementById('avatarInitials');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    if (initials) initials.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+
+  // Upload ke server
+  msgEl.style.color = 'var(--gray-light)';
+  msgEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Mengupload...';
+  msgEl.style.display = 'block';
+
+  var formData = new FormData();
+  formData.append('avatar', file);
+  formData.append('csrf_token', '<?= htmlspecialchars($csrf) ?>');
+
+  fetch('<?= SITE_URL ?>/api/upload-avatar.php', {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: formData
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      msgEl.style.color = 'var(--success)';
+      msgEl.innerHTML = '<i class="fa fa-check-circle"></i> ' + data.message;
+      document.getElementById('avatarPreview').src = data.avatar_url;
+    } else {
+      msgEl.style.color = '#ef4444';
+      msgEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + data.message;
+      // Revert preview
+      var preview = document.getElementById('avatarPreview');
+      if (!preview.dataset.orig || preview.dataset.orig === '') {
+        preview.style.display = 'none';
+        var initials = document.getElementById('avatarInitials');
+        if (initials) initials.style.display = 'flex';
+      } else {
+        preview.src = preview.dataset.orig;
+      }
+    }
+  })
+  .catch(function() {
+    msgEl.style.color = '#ef4444';
+    msgEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Gagal upload. Coba lagi.';
+  });
+});
+
+// Simpan src asli avatar untuk revert jika error
+(function() {
+  var preview = document.getElementById('avatarPreview');
+  if (preview) preview.dataset.orig = preview.src;
+})();
+</script>
 </body>
 </html>

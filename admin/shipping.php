@@ -243,7 +243,7 @@ if ($event) {
         LEFT JOIN user_profiles p ON p.user_id = r.user_id
         WHERE r.event_id = ?
         GROUP BY COALESCE(p.jersey_size,'?')
-        ORDER BY FIELD(p.jersey_size,'XS','S','M','L','XL','XXL','XXXL'), p.jersey_size
+        ORDER BY FIELD(COALESCE(p.jersey_size,'?'),'XS','S','M','L','XL','XXL','XXXL','?'), COALESCE(p.jersey_size,'?')
     ");
     $jStmt->execute([$event['id']]);
     $jerseySizes = $jStmt->fetchAll(PDO::FETCH_KEY_PAIR);

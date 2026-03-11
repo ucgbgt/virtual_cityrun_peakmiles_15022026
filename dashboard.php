@@ -511,10 +511,36 @@ $csrf = generateCSRFToken();
         <label class="form-label">Catatan <span style="color:var(--gray-light);font-weight:400;">(opsional)</span></label>
         <textarea name="notes" class="form-control-custom" rows="2" placeholder="Rute, kondisi, atau info tambahan..."></textarea>
       </div>
+      <div id="submitRunError" class="alert-custom alert-danger" style="display:none;margin-bottom:12px;"></div>
       <button type="submit" class="btn-primary-custom" style="width:100%;justify-content:center;padding:14px;">
         <i class="fa fa-paper-plane"></i> Submit Lari
       </button>
     </form>
+  </div>
+</div>
+
+<!-- SUBMIT SUCCESS MODAL -->
+<div class="modal-overlay" id="submitSuccessModal">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <div style="width:80px;height:80px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border:2px solid rgba(34,197,94,0.35);">
+      <i class="fa fa-check" style="font-size:36px;color:var(--success);"></i>
+    </div>
+    <h3 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;">Submission Berhasil!</h3>
+    <p style="color:var(--gray-light);font-size:14px;line-height:1.7;margin-bottom:16px;">
+      Bukti lari <strong id="successDistance" style="color:var(--primary);"></strong> pada <strong id="successDate" style="color:#fff;"></strong> berhasil dikirim.
+    </p>
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:16px;margin-bottom:20px;">
+      <i class="fa fa-clock" style="color:var(--success);margin-right:8px;"></i>
+      <span style="color:var(--gray-light);font-size:13px;">Tim kami akan mereview submission dalam <strong style="color:#fff;">1–2 hari kerja</strong>.</span>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="closeModal('submitSuccessModal');location.reload();" class="btn-primary-custom" style="padding:12px 24px;">
+        <i class="fa fa-refresh"></i> Lihat Update
+      </button>
+      <button onclick="closeModal('submitSuccessModal')" class="btn-outline-custom" style="padding:12px 24px;">
+        Tutup
+      </button>
+    </div>
   </div>
 </div>
 
@@ -799,11 +825,48 @@ function joinBayarSekarang() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Handle form submission
+  // Handle form submission via AJAX
   document.getElementById('submitForm')?.addEventListener('submit', function(e) {
-    const btn = this.querySelector('button[type="submit"]');
+    e.preventDefault();
+    const form = this;
+    const btn = form.querySelector('button[type="submit"]');
+    const errEl = document.getElementById('submitRunError');
+    const origHTML = btn.innerHTML;
+
+    errEl.style.display = 'none';
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Mengirim...';
     btn.disabled = true;
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: new FormData(form)
+    })
+    .then(r => r.json())
+    .then(function(data) {
+      if (data.success) {
+        closeModal('submitRunModal');
+        form.reset();
+        // Reset file upload label jika ada
+        const fileText = form.querySelector('.file-upload-text strong');
+        if (fileText) fileText.textContent = 'Klik untuk upload';
+        // Isi detail success modal
+        document.getElementById('successDistance').textContent = data.distance + ' km';
+        document.getElementById('successDate').textContent = data.run_date;
+        openModal('submitSuccessModal');
+      } else {
+        errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + data.message;
+        errEl.style.display = 'block';
+        btn.innerHTML = origHTML;
+        btn.disabled = false;
+      }
+    })
+    .catch(function() {
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Terjadi kesalahan jaringan. Coba lagi.';
+      errEl.style.display = 'block';
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
+    });
   });
 
   // Auto-open join event modal jika belum terdaftar

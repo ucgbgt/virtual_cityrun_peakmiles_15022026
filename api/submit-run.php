@@ -37,7 +37,13 @@ $db = getDB();
 $eventId = (int)($_POST['event_id'] ?? 0);
 $runDate = $_POST['run_date'] ?? '';
 $distanceKm = (float)($_POST['distance_km'] ?? 0);
+$runTime = trim($_POST['run_time'] ?? '');
 $notes = trim($_POST['notes'] ?? '');
+
+// Validate run_time format HH:MM if provided
+if ($runTime !== '' && !preg_match('/^\d{1,2}:\d{2}$/', $runTime)) {
+    dieWithError('Format waktu tidak valid. Gunakan format HH:MM (contoh: 01:30).');
+}
 
 // Validate event
 $event = $db->prepare("SELECT * FROM events WHERE id=? AND is_active=1");
@@ -129,8 +135,8 @@ if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
 }
 
 // Save to database
-$stmt = $db->prepare("INSERT INTO run_submissions (user_id, event_id, run_date, distance_km, evidence_path, notes, status) VALUES (?,?,?,?,?,?,'pending')");
-$stmt->execute([$user['id'], $eventId, $runDate, $distanceKm, $filename, $notes]);
+$stmt = $db->prepare("INSERT INTO run_submissions (user_id, event_id, run_date, distance_km, run_time, evidence_path, notes, status) VALUES (?,?,?,?,?,?,?,'pending')");
+$stmt->execute([$user['id'], $eventId, $runDate, $distanceKm, $runTime ?: null, $filename, $notes]);
 
 if ($isAjax) {
     header('Content-Type: application/json');
@@ -139,6 +145,7 @@ if ($isAjax) {
         'message'  => 'Submission berhasil dikirim!',
         'distance' => number_format($distanceKm, 2),
         'run_date' => date('d M Y', strtotime($runDate)),
+        'run_time' => $runTime ?: null,
     ]);
     exit;
 }

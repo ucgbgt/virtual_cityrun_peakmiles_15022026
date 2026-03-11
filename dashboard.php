@@ -490,11 +490,21 @@ $csrf = generateCSRFToken();
                min="<?= $event['start_date'] ?>"
                <?php endif; ?>>
       </div>
-      <div class="form-group">
-        <label class="form-label">Jarak (km)</label>
-        <input type="number" name="distance_km" class="form-control-custom" 
-               placeholder="cth: 5.5" step="0.01" min="0.1" max="30" required>
-        <div class="form-error">Maksimal <?= MAX_KM_PER_SUBMISSION ?> km per submission</div>
+      <div class="row g-3">
+        <div class="col-7">
+          <div class="form-group">
+            <label class="form-label">Jarak (km)</label>
+            <input type="number" name="distance_km" class="form-control-custom"
+                   placeholder="cth: 5.5" step="0.01" min="0.1" max="30" required>
+            <div class="form-error">Maksimal <?= MAX_KM_PER_SUBMISSION ?> km per submission</div>
+          </div>
+        </div>
+        <div class="col-5">
+          <div class="form-group">
+            <label class="form-label">Waktu <span style="color:var(--gray-light);font-weight:400;">(opsional)</span></label>
+            <input type="time" name="run_time" class="form-control-custom" placeholder="01:30">
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Bukti Lari <span style="color:var(--gray-light);font-weight:400;">(JPG/PNG/WEBP, maks 10MB)</span></label>
@@ -527,7 +537,7 @@ $csrf = generateCSRFToken();
     </div>
     <h3 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;">Submission Berhasil!</h3>
     <p style="color:var(--gray-light);font-size:14px;line-height:1.7;margin-bottom:16px;">
-      Bukti lari <strong id="successDistance" style="color:var(--primary);"></strong> pada <strong id="successDate" style="color:#fff;"></strong> berhasil dikirim.
+      Bukti lari <strong id="successDistance" style="color:var(--primary);"></strong> pada <strong id="successDate" style="color:#fff;"></strong><span id="successTimeWrap"> selama <strong id="successTime" style="color:var(--primary);"></strong></span> berhasil dikirim.
     </p>
     <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:16px;margin-bottom:20px;">
       <i class="fa fa-clock" style="color:var(--success);margin-right:8px;"></i>
@@ -853,6 +863,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Isi detail success modal
         document.getElementById('successDistance').textContent = data.distance + ' km';
         document.getElementById('successDate').textContent = data.run_date;
+        var timeWrap = document.getElementById('successTimeWrap');
+        if (data.run_time) {
+          document.getElementById('successTime').textContent = data.run_time;
+          timeWrap.style.display = 'inline';
+        } else {
+          timeWrap.style.display = 'none';
+        }
         openModal('submitSuccessModal');
       } else {
         errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + data.message;

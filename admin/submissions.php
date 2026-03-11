@@ -156,6 +156,7 @@ $csrf = generateCSRFToken();
                 </th>
                 <th>Peserta</th>
                 <th>Jarak</th>
+                <th>Waktu</th>
                 <th>Bukti</th>
                 <th>Tgl Lari</th>
                 <th>Catatan</th>
@@ -199,6 +200,11 @@ $csrf = generateCSRFToken();
                          style="width:76px;background:var(--dark-4);border:1px solid var(--border);color:#fff;
                                 padding:4px 8px;border-radius:6px;font-size:12px;margin-top:4px;">
                   <?php endif; ?>
+                </td>
+
+                <!-- Waktu -->
+                <td style="font-size:13px;color:var(--gray-light);white-space:nowrap;">
+                  <?= !empty($sub['run_time']) ? '<i class="fa fa-clock" style="color:var(--primary);margin-right:4px;"></i>' . substr($sub['run_time'], 0, 5) : '—' ?>
                 </td>
 
                 <!-- Bukti -->

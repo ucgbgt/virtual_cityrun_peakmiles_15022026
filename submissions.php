@@ -108,6 +108,7 @@ $csrf = generateCSRFToken();
               <tr>
                 <th>Tanggal Lari</th>
                 <th>Jarak</th>
+                <th>Waktu</th>
                 <th>Bukti</th>
                 <th>Catatan</th>
                 <th>Status</th>
@@ -120,6 +121,9 @@ $csrf = generateCSRFToken();
               <tr>
                 <td style="white-space:nowrap;"><?= date('d M Y', strtotime($sub['run_date'])) ?></td>
                 <td style="font-weight:700;color:var(--primary);white-space:nowrap;"><?= number_format($sub['distance_km'], 2) ?> km</td>
+                <td style="white-space:nowrap;color:var(--gray-light);font-size:13px;">
+                  <?= $sub['run_time'] ? '<i class="fa fa-clock" style="margin-right:4px;color:var(--primary);"></i>' . substr($sub['run_time'], 0, 5) : '—' ?>
+                </td>
                 <td>
                   <?php if ($sub['evidence_path']): ?>
                   <img src="<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>" alt="Bukti" class="evidence-thumb"
@@ -191,9 +195,19 @@ $csrf = generateCSRFToken();
         <input type="date" name="run_date" class="form-control-custom" required max="<?= date('Y-m-d', strtotime('+1 day')) ?>"
                <?php if ($event): ?>min="<?= $event['start_date'] ?>"<?php endif; ?>>
       </div>
-      <div class="form-group">
-        <label class="form-label">Jarak (km) — maks 30km</label>
-        <input type="number" name="distance_km" class="form-control-custom" placeholder="cth: 3.5" step="0.01" min="0.1" max="30" required>
+      <div class="row g-3">
+        <div class="col-7">
+          <div class="form-group">
+            <label class="form-label">Jarak (km) — maks 30km</label>
+            <input type="number" name="distance_km" class="form-control-custom" placeholder="cth: 3.5" step="0.01" min="0.1" max="30" required>
+          </div>
+        </div>
+        <div class="col-5">
+          <div class="form-group">
+            <label class="form-label">Waktu <span style="color:var(--gray-light);font-weight:400;">(opsional)</span></label>
+            <input type="time" name="run_time" class="form-control-custom" placeholder="01:30">
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Bukti Lari</label>

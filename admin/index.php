@@ -254,39 +254,39 @@ $csrf   = generateCSRFToken();
       $dayColor  = $eventDaysLeft <= 7 ? '#ef4444' : ($eventDaysLeft <= 14 ? '#f59e0b' : '#f97316');
       ?>
 
-      <!-- ══ ROW 1: 6 KPI TILES ══ -->
+      <!-- ══ ROW 1: 6 KPI TILES — selalu 3 per baris ══ -->
       <div class="row g-2 mb-3">
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-4 col-lg-2">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:rgba(59,130,246,0.15);color:#60a5fa;"><i class="fa fa-users"></i></div>
             <div><div class="kpi-val"><?= $totalRegistrations ?></div><div class="kpi-lbl">Peserta</div></div>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-4 col-lg-2">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:rgba(249,115,22,0.15);color:#f97316;"><i class="fa fa-trophy"></i></div>
             <div><div class="kpi-val"><?= $totalFinishers ?></div><div class="kpi-lbl">Finisher</div></div>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-4 col-lg-2">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;"><i class="fa fa-running"></i></div>
             <div><div class="kpi-val"><?= number_format((float)$totalKmApproved,0) ?></div><div class="kpi-lbl">Total KM</div></div>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-4 col-lg-2">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:rgba(249,115,22,0.15);color:#f97316;"><i class="fa fa-wallet"></i></div>
-            <div><div class="kpi-val" style="font-size:14px;margin-top:1px;">Rp <?= number_format(((int)$revenueStats['rev_10k']+(int)$revenueStats['rev_21k'])/1000,0)?>rb</div><div class="kpi-lbl">Revenue</div></div>
+            <div><div class="kpi-val" style="font-size:13px;margin-top:1px;">Rp<?= number_format(((int)$revenueStats['rev_10k']+(int)$revenueStats['rev_21k'])/1000,0)?>rb</div><div class="kpi-lbl">Revenue</div></div>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-4 col-lg-2">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;"><i class="fa fa-clock"></i></div>
-            <div><div class="kpi-val" style="color:<?= $pendingSubs > 0 ? '#f59e0b' : '#22c55e' ?>;"><?= $pendingSubs ?></div><div class="kpi-lbl">Pending Review</div></div>
+            <div><div class="kpi-val" style="color:<?= $pendingSubs > 0 ? '#f59e0b' : '#22c55e' ?>;"><?= $pendingSubs ?></div><div class="kpi-lbl">Pending</div></div>
           </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-4 col-lg-2">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:rgba(<?= $eventDaysLeft<=7 ? '239,68,68' : '249,115,22' ?>,0.15);color:<?= $dayColor ?>;"><i class="fa fa-calendar-alt"></i></div>
             <div><div class="kpi-val" style="color:<?= $dayColor ?>;"><?= $eventDaysLeft ?></div><div class="kpi-lbl">Hari Tersisa</div></div>
@@ -350,46 +350,45 @@ $csrf   = generateCSRFToken();
           </div>
         </div>
 
-        <!-- Col B: 2 Donuts stacked -->
+        <!-- Col B: 2 Donuts — side by side -->
         <div class="col-md-6 col-lg-3">
-          <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
-            <!-- Donut Kategori -->
-            <div>
-              <div class="cc-title"><i class="fa fa-running"></i> Kategori</div>
-              <div style="display:flex;align-items:center;gap:12px;">
-                <div style="position:relative;width:90px;height:90px;flex-shrink:0;">
+          <div class="cc h-100">
+            <div class="row g-2">
+              <!-- Donut Kategori -->
+              <div class="col-6">
+                <div class="cc-title" style="font-size:10px;"><i class="fa fa-running"></i> Kategori</div>
+                <div style="position:relative;width:72px;height:72px;margin:8px auto 6px;">
                   <canvas id="chartKategori"></canvas>
                   <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-                    <div style="font-size:16px;font-weight:800;color:#fff;"><?= (int)$revenueStats['total'] ?></div>
-                    <div style="font-size:9px;color:var(--gray-light);">total</div>
+                    <div style="font-size:14px;font-weight:800;color:#fff;"><?= (int)$revenueStats['total'] ?></div>
+                    <div style="font-size:8px;color:var(--gray-light);">total</div>
                   </div>
                 </div>
-                <div style="flex:1;">
-                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                    <span style="width:8px;height:8px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
-                    <span style="font-size:12px;color:var(--gray-light);">10K</span>
-                    <strong style="color:#f97316;font-size:14px;margin-left:auto;"><?= (int)$revenueStats['count_10k'] ?></strong>
+                <div style="text-align:left;">
+                  <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
+                    <span style="font-size:11px;color:var(--gray-light);">10K</span>
+                    <strong style="color:#f97316;font-size:12px;margin-left:auto;"><?= (int)$revenueStats['count_10k'] ?></strong>
                   </div>
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>
-                    <span style="font-size:12px;color:var(--gray-light);">21K</span>
-                    <strong style="color:#60a5fa;font-size:14px;margin-left:auto;"><?= (int)$revenueStats['count_21k'] ?></strong>
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>
+                    <span style="font-size:11px;color:var(--gray-light);">21K</span>
+                    <strong style="color:#60a5fa;font-size:12px;margin-left:auto;"><?= (int)$revenueStats['count_21k'] ?></strong>
                   </div>
                 </div>
               </div>
-            </div>
-            <div style="border-top:1px solid var(--border);padding-top:14px;">
-              <div class="cc-title"><i class="fa fa-credit-card"></i> Status Akun</div>
-              <div style="display:flex;align-items:center;gap:12px;">
-                <div style="position:relative;width:90px;height:90px;flex-shrink:0;">
+              <!-- Donut Status Akun -->
+              <div class="col-6" style="border-left:1px solid var(--border);padding-left:12px;">
+                <div class="cc-title" style="font-size:10px;"><i class="fa fa-credit-card"></i> Status Akun</div>
+                <div style="position:relative;width:72px;height:72px;margin:8px auto 6px;">
                   <canvas id="chartStatusAkun"></canvas>
                 </div>
-                <div style="flex:1;">
+                <div style="text-align:left;">
                   <?php foreach([['#22c55e','Lunas',(int)$revenueStats['paid_count']],['#60a5fa','Manual',(int)$revenueStats['manual_count']],['#ef4444','Belum',(int)$revenueStats['unpaid_count']]] as [$c,$l,$n]): ?>
-                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-                    <span style="width:7px;height:7px;border-radius:50%;background:<?=$c?>;flex-shrink:0;"></span>
-                    <span style="font-size:11px;color:var(--gray-light);"><?=$l?></span>
-                    <strong style="color:<?=$c?>;font-size:13px;margin-left:auto;"><?=$n?></strong>
+                  <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:<?=$c?>;flex-shrink:0;"></span>
+                    <span style="font-size:10px;color:var(--gray-light);"><?=$l?></span>
+                    <strong style="color:<?=$c?>;font-size:11px;margin-left:auto;"><?=$n?></strong>
                   </div>
                   <?php endforeach; ?>
                 </div>

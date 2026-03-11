@@ -4,26 +4,26 @@ $activeNav = 'admin-participants';
 require_once __DIR__ . '/../includes/functions.php';
 requireAdmin();
 
-$db = getDB();
+$db    = getDB();
 $event = getActiveEvent();
 
-$search = $_GET['search'] ?? '';
-$filterCategory = $_GET['category'] ?? '';
-$filterStatus = $_GET['status'] ?? '';
-$filterShipping = $_GET['shipping'] ?? '';
-$page = max(1, (int)($_GET['page'] ?? 1));
+$search          = $_GET['search']   ?? '';
+$filterCategory  = $_GET['category'] ?? '';
+$filterStatus    = $_GET['status']   ?? '';
+$filterShipping  = $_GET['shipping'] ?? '';
+$filterPayment   = $_GET['payment']  ?? '';
+$page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 20;
-$offset = ($page - 1) * $perPage;
+$offset  = ($page - 1) * $perPage;
 
-$filterPayment = $_GET['payment'] ?? '';
-
-$where = ['1=1'];
+// ── Build shared WHERE clause (used by both list query and CSV export) ─────────
+$where  = ['1=1'];
 $params = [];
-if ($event) { $where[] = 'r.event_id = ?'; $params[] = $event['id']; }
-if ($search) { $where[] = '(u.name LIKE ? OR u.email LIKE ?)'; $params[] = "%$search%"; $params[] = "%$search%"; }
-if ($filterCategory) { $where[] = 'r.category = ?'; $params[] = $filterCategory; }
-if ($filterStatus) { $where[] = 'r.status = ?'; $params[] = $filterStatus; }
-if ($filterShipping) { $where[] = 'COALESCE(s.status,"not_ready") = ?'; $params[] = $filterShipping; }
+if ($event)          { $where[] = 'r.event_id = ?';                       $params[] = $event['id']; }
+if ($search)         { $where[] = '(u.name LIKE ? OR u.email LIKE ?)';    $params[] = "%$search%"; $params[] = "%$search%"; }
+if ($filterCategory) { $where[] = 'r.category = ?';                       $params[] = $filterCategory; }
+if ($filterStatus)   { $where[] = 'r.status = ?';                         $params[] = $filterStatus; }
+if ($filterShipping) { $where[] = 'COALESCE(s.status,"not_ready") = ?';   $params[] = $filterShipping; }
 if ($filterPayment === 'paid') {
     $where[] = "(r.payment_status='paid' OR r.admin_activated=1)";
 } elseif ($filterPayment === 'unpaid') {
@@ -31,27 +31,137 @@ if ($filterPayment === 'paid') {
 }
 $whereStr = implode(' AND ', $where);
 
-$countStmt = $db->prepare("SELECT COUNT(*) FROM registrations r 
-    JOIN users u ON r.user_id=u.id 
-    LEFT JOIN shipping s ON s.user_id=r.user_id AND s.event_id=r.event_id
+// ── CSV Export — MUST run before any HTML output ───────────────────────────────
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $exportSql = "
+        SELECT u.name, u.email, u.phone,
+               r.category, r.target_km, r.status, r.payment_status,
+               CASE
+                 WHEN r.payment_status='paid' THEN 'Lunas'
+                 WHEN r.admin_activated=1 THEN 'Manual (Admin)'
+                 ELSE 'Belum Bayar'
+               END AS status_akun,
+               r.admin_activated, r.activation_note,
+               COALESCE(SUM(rs.distance_km),0) AS total_km,
+               r.merchant_order_id, r.payment_reference,
+               DATE_FORMAT(r.registered_at,'%d/%m/%Y %H:%i') AS tgl_daftar,
+               p.province, p.city, p.jersey_size,
+               COALESCE(s.status,'not_ready') AS shipping_status,
+               s.courier, s.tracking_number
+        FROM registrations r
+        JOIN users u ON r.user_id = u.id
+        LEFT JOIN user_profiles p ON p.user_id = u.id
+        LEFT JOIN shipping s ON s.user_id = r.user_id AND s.event_id = r.event_id
+        LEFT JOIN run_submissions rs ON rs.user_id = r.user_id AND rs.event_id = r.event_id AND rs.status = 'approved'
+        WHERE $whereStr
+        GROUP BY r.id, u.name, u.email, u.phone, r.category, r.target_km, r.status,
+                 r.payment_status, r.admin_activated, r.activation_note,
+                 r.merchant_order_id, r.payment_reference, r.registered_at,
+                 p.province, p.city, p.jersey_size, s.status, s.courier, s.tracking_number
+        ORDER BY r.registered_at DESC
+    ";
+    $exportStmt = $db->prepare($exportSql);
+    $exportStmt->execute($params);
+    $rows = $exportStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $filename = 'peserta-peakmiles-' . date('Ymd-His') . '.csv';
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    // UTF-8 BOM agar Excel terbaca dengan benar
+    fputs($out, "\xEF\xBB\xBF");
+
+    // Header row
+    fputcsv($out, [
+        'No', 'Nama', 'Email', 'Telepon',
+        'Kategori', 'Target KM', 'Total KM', 'Progress %',
+        'Status Run', 'Status Akun', 'Catatan Aktivasi',
+        'Order ID Pembayaran', 'Referensi Pembayaran',
+        'Tanggal Daftar',
+        'Kota', 'Provinsi', 'Ukuran Jersey',
+        'Status Pengiriman', 'Kurir', 'No. Resi',
+    ]);
+
+    $no = 1;
+    foreach ($rows as $row) {
+        $targetKm  = (float)($row['target_km']  ?? 0);
+        $totalKm   = (float)($row['total_km']   ?? 0);
+        $progress  = $targetKm > 0 ? round($totalKm / $targetKm * 100, 1) : 0;
+
+        $shippingMap = ['not_ready'=>'Belum Siap','preparing'=>'Disiapkan','shipped'=>'Dikirim','delivered'=>'Terkirim'];
+
+        fputcsv($out, [
+            $no++,
+            $row['name']               ?? '',
+            $row['email']              ?? '',
+            $row['phone']              ?? '',
+            $row['category']           ?? '',
+            $targetKm,
+            number_format($totalKm, 2, '.', ''),
+            $progress . '%',
+            ucfirst($row['status']     ?? ''),
+            $row['status_akun']        ?? '',
+            $row['activation_note']    ?? '',
+            $row['merchant_order_id']  ?? '',
+            $row['payment_reference']  ?? '',
+            $row['tgl_daftar']         ?? '',
+            $row['city']               ?? '',
+            $row['province']           ?? '',
+            $row['jersey_size']        ?? '',
+            $shippingMap[$row['shipping_status']] ?? $row['shipping_status'],
+            $row['courier']            ?? '',
+            $row['tracking_number']    ?? '',
+        ]);
+    }
+
+    fclose($out);
+    exit;
+}
+
+// ── Normal page load ───────────────────────────────────────────────────────────
+$countStmt = $db->prepare("SELECT COUNT(*) FROM registrations r
+    JOIN users u ON r.user_id = u.id
+    LEFT JOIN shipping s ON s.user_id = r.user_id AND s.event_id = r.event_id
     WHERE $whereStr");
 $countStmt->execute($params);
 $total = $countStmt->fetchColumn();
 
-$stmt = $db->prepare("SELECT r.*, u.name, u.email, u.phone,
-    p.province, p.city, p.jersey_size,
-    COALESCE(s.status,'not_ready') as shipping_status,
-    s.courier, s.tracking_number
-    FROM registrations r 
+$stmt = $db->prepare("
+    SELECT r.*, u.name, u.email, u.phone,
+           p.province, p.city, p.jersey_size,
+           COALESCE(s.status,'not_ready') AS shipping_status,
+           s.courier, s.tracking_number,
+           COALESCE((
+               SELECT SUM(rs2.distance_km) FROM run_submissions rs2
+               WHERE rs2.user_id=r.user_id AND rs2.event_id=r.event_id AND rs2.status='approved'
+           ),0) AS total_km_approved
+    FROM registrations r
     JOIN users u ON r.user_id = u.id
     LEFT JOIN user_profiles p ON p.user_id = u.id
-    LEFT JOIN shipping s ON s.user_id=r.user_id AND s.event_id=r.event_id
-    WHERE $whereStr ORDER BY r.registered_at DESC LIMIT ? OFFSET ?");
+    LEFT JOIN shipping s ON s.user_id = r.user_id AND s.event_id = r.event_id
+    WHERE $whereStr
+    ORDER BY r.registered_at DESC
+    LIMIT ? OFFSET ?");
 $stmt->execute(array_merge($params, [$perPage, $offset]));
 $participants = $stmt->fetchAll();
 
-$csrf = generateCSRFToken();
+$csrf       = generateCSRFToken();
 $totalPages = $total ? ceil($total / $perPage) : 1;
+
+// ── Build export URL carrying ALL active filters ───────────────────────────────
+$exportParams = http_build_query(array_filter([
+    'export'   => 'csv',
+    'search'   => $search,
+    'category' => $filterCategory,
+    'status'   => $filterStatus,
+    'payment'  => $filterPayment,
+    'shipping' => $filterShipping,
+]));
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -76,37 +186,12 @@ $totalPages = $total ? ceil($total / $perPage) : 1;
         <a href="<?= SITE_URL ?>/admin/participants-add" class="btn-primary-custom btn-sm-custom">
           <i class="fa fa-user-plus"></i> Tambah Peserta
         </a>
-        <a href="?export=csv&search=<?= urlencode($search) ?>&category=<?= urlencode($filterCategory) ?>&status=<?= urlencode($filterStatus) ?>" 
-           class="btn-outline-custom btn-sm-custom">
+        <a href="?<?= $exportParams ?>" class="btn-outline-custom btn-sm-custom">
           <i class="fa fa-file-csv"></i> Export CSV
         </a>
       </div>
     </div>
 
-    <?php
-    // Handle CSV export
-    if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=peserta-stridenation-'.date('Ymd').'.csv');
-        $out = fopen('php://output', 'w');
-        fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM for Excel
-        fputcsv($out, ['Nama','Email','Telepon','Kategori','Total KM','Status','Kota','Provinsi','Jersey','Status Kirim','Resi']);
-        $exportStmt = $db->prepare("SELECT r.*, u.name, u.email, u.phone, p.province, p.city, p.jersey_size,
-            COALESCE(s.status,'not_ready') as shipping_status, s.tracking_number
-            FROM registrations r JOIN users u ON r.user_id=u.id
-            LEFT JOIN user_profiles p ON p.user_id=u.id
-            LEFT JOIN shipping s ON s.user_id=r.user_id AND s.event_id=r.event_id
-            WHERE $whereStr ORDER BY r.registered_at DESC");
-        $exportStmt->execute($params);
-        foreach ($exportStmt->fetchAll() as $row) {
-            fputcsv($out, [$row['name'],$row['email'],$row['phone'],$row['category'],
-                $row['total_km_approved'],$row['status'],$row['city'],$row['province'],
-                $row['jersey_size'],$row['shipping_status'],$row['tracking_number']]);
-        }
-        fclose($out);
-        exit;
-    }
-    ?>
 
     <div class="page-content">
       <div class="form-card mb-4">

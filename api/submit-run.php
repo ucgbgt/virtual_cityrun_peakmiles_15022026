@@ -90,11 +90,12 @@ if ($distanceKm > MAX_KM_PER_SUBMISSION) {
     dieWithError('Jarak maksimal ' . MAX_KM_PER_SUBMISSION . ' km per submission.');
 }
 
-// Rate limit: max 3 submissions per day
+// Rate limit: baca dari settings
+$maxDaily = max(1, (int)getSetting('max_daily_submissions', '3'));
 $todayCount = $db->prepare("SELECT COUNT(*) FROM run_submissions WHERE user_id=? AND event_id=? AND DATE(created_at)=CURDATE()");
 $todayCount->execute([$user['id'], $eventId]);
-if ($todayCount->fetchColumn() >= 3) {
-    dieWithError('Maksimal 3 submission per hari. Coba lagi besok.');
+if ($todayCount->fetchColumn() >= $maxDaily) {
+    dieWithError('Maksimal ' . $maxDaily . ' submission per hari. Coba lagi besok.');
 }
 
 // Validate file upload

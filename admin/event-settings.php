@@ -10,32 +10,42 @@ $flash = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF($_POST['csrf_token'] ?? '')) die('Invalid CSRF');
-    $eventId = (int)($_POST['event_id'] ?? 0);
-    $name = trim($_POST['name'] ?? '');
-    $desc = trim($_POST['description'] ?? '');
-    $startDate = $_POST['start_date'] ?? '';
-    $endDate = $_POST['end_date'] ?? '';
-    $target10k = (float)($_POST['target_10k'] ?? 10);
-    $target21k = (float)($_POST['target_21k'] ?? 21);
-    $fee10k    = (int)($_POST['fee_10k'] ?? 179000);
-    $fee21k    = (int)($_POST['fee_21k'] ?? 199000);
-    $regUrl = trim($_POST['registration_url'] ?? 'https://nusatix.com');
-    $isActive = isset($_POST['is_active']) ? 1 : 0;
-    $slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
 
-    if ($eventId) {
-        $db->prepare("UPDATE events SET name=?,slug=?,description=?,start_date=?,end_date=?,target_10k=?,target_21k=?,fee_10k=?,fee_21k=?,registration_url=?,is_active=? WHERE id=?")
-           ->execute([$name,$slug,$desc,$startDate,$endDate,$target10k,$target21k,$fee10k,$fee21k,$regUrl,$isActive,$eventId]);
-        $flash = ['type'=>'success','msg'=>'Event berhasil diperbarui!'];
+    if (($_POST['action'] ?? '') === 'save_settings') {
+        // Simpan pengaturan submission
+        $maxDaily = max(1, min(99, (int)($_POST['max_daily_submissions'] ?? 3)));
+        setSetting('max_daily_submissions', (string)$maxDaily);
+        $flash = ['type' => 'success', 'msg' => 'Pengaturan submission berhasil disimpan!'];
     } else {
-        $db->prepare("INSERT INTO events (name,slug,description,start_date,end_date,target_10k,target_21k,fee_10k,fee_21k,registration_url,is_active) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
-           ->execute([$name,$slug,$desc,$startDate,$endDate,$target10k,$target21k,$fee10k,$fee21k,$regUrl,$isActive]);
-        $flash = ['type'=>'success','msg'=>'Event baru berhasil dibuat!'];
+        // Simpan event
+        $eventId = (int)($_POST['event_id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $desc = trim($_POST['description'] ?? '');
+        $startDate = $_POST['start_date'] ?? '';
+        $endDate = $_POST['end_date'] ?? '';
+        $target10k = (float)($_POST['target_10k'] ?? 10);
+        $target21k = (float)($_POST['target_21k'] ?? 21);
+        $fee10k    = (int)($_POST['fee_10k'] ?? 179000);
+        $fee21k    = (int)($_POST['fee_21k'] ?? 199000);
+        $regUrl = trim($_POST['registration_url'] ?? 'https://nusatix.com');
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
+
+        if ($eventId) {
+            $db->prepare("UPDATE events SET name=?,slug=?,description=?,start_date=?,end_date=?,target_10k=?,target_21k=?,fee_10k=?,fee_21k=?,registration_url=?,is_active=? WHERE id=?")
+               ->execute([$name,$slug,$desc,$startDate,$endDate,$target10k,$target21k,$fee10k,$fee21k,$regUrl,$isActive,$eventId]);
+            $flash = ['type'=>'success','msg'=>'Event berhasil diperbarui!'];
+        } else {
+            $db->prepare("INSERT INTO events (name,slug,description,start_date,end_date,target_10k,target_21k,fee_10k,fee_21k,registration_url,is_active) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+               ->execute([$name,$slug,$desc,$startDate,$endDate,$target10k,$target21k,$fee10k,$fee21k,$regUrl,$isActive]);
+            $flash = ['type'=>'success','msg'=>'Event baru berhasil dibuat!'];
+        }
+        logAudit($adminUser['id'], 'update_event', 'events', $eventId ?: $db->lastInsertId());
     }
-    logAudit($adminUser['id'], 'update_event', 'events', $eventId ?: $db->lastInsertId());
 }
 
 $events = $db->query("SELECT * FROM events ORDER BY id DESC")->fetchAll();
+$maxDailySetting = (int)getSetting('max_daily_submissions', '3');
 $csrf = generateCSRFToken();
 ?>
 <!DOCTYPE html>
@@ -65,6 +75,40 @@ $csrf = generateCSRFToken();
       <?php if ($flash): ?>
       <div class="alert-custom alert-<?= $flash['type'] ?>"><?= sanitize($flash['msg']) ?></div>
       <?php endif; ?>
+
+      <!-- Submission Settings Card -->
+      <div class="form-card mb-4">
+        <h5 style="color:#fff;font-weight:700;margin-bottom:6px;">
+          <i class="fa fa-sliders-h" style="color:var(--primary);margin-right:8px;"></i>Pengaturan Submission
+        </h5>
+        <p style="color:var(--gray-light);font-size:13px;margin-bottom:20px;">
+          Atur batas maksimal submission lari yang bisa dilakukan user per hari.
+        </p>
+        <form method="POST" action="">
+          <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+          <input type="hidden" name="action" value="save_settings">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label">Maks. Submission per Hari</label>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <input type="number" name="max_daily_submissions"
+                       class="form-control-custom" style="max-width:120px;"
+                       value="<?= $maxDailySetting ?>" min="1" max="99" required>
+                <span style="color:var(--gray-light);font-size:13px;">kali/hari per user</span>
+              </div>
+              <div style="font-size:12px;color:var(--gray-light);margin-top:6px;">
+                <i class="fa fa-info-circle" style="color:var(--primary);margin-right:4px;"></i>
+                Saat ini: <strong style="color:#fff;"><?= $maxDailySetting ?>x</strong> per hari
+              </div>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn-primary-custom btn-sm-custom">
+                <i class="fa fa-save"></i> Simpan Pengaturan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
 
       <!-- Events List -->
       <?php foreach ($events as $ev): ?>

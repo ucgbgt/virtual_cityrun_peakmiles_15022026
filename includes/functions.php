@@ -246,6 +246,24 @@ function progressPercent(float $current, float $target): int {
     return min(100, (int)(($current / $target) * 100));
 }
 
+function getSetting(string $key, string $default = ''): string {
+    try {
+        $db   = getDB();
+        $stmt = $db->prepare("SELECT value FROM settings WHERE `key`=?");
+        $stmt->execute([$key]);
+        $val  = $stmt->fetchColumn();
+        return $val !== false ? $val : $default;
+    } catch (Exception $e) {
+        return $default;
+    }
+}
+
+function setSetting(string $key, string $value): void {
+    $db = getDB();
+    $db->prepare("INSERT INTO settings (`key`, `value`) VALUES (?,?) ON DUPLICATE KEY UPDATE `value`=?, `updated_at`=NOW()")
+       ->execute([$key, $value, $value]);
+}
+
 function sanitize(string $input): string {
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 }

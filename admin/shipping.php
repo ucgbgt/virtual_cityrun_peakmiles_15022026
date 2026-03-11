@@ -233,21 +233,30 @@ $kpiTotal = $kpi['not_ready'] + $kpi['preparing'] + $kpi['shipped'] + $kpi['deli
 $kpiDonePercent = $kpiTotal > 0 ? round($kpi['delivered'] / $kpiTotal * 100) : 0;
 
 // ══════════════════════════════════════════════════════════════════════
-// JERSEY SIZE SUMMARY
+// JERSEY SIZE SUMMARY — selalu tampilkan semua ukuran standar
 // ══════════════════════════════════════════════════════════════════════
-$jerseySizes = [];
+$jerseyOrder  = ['XS','S','M','L','XL','XXL','XXXL'];
+$jerseyData   = array_fill_keys($jerseyOrder, 0); // default 0 semua
+$jerseyOther  = 0; // ukuran di luar daftar standar atau kosong
 if ($event) {
     $jStmt = $db->prepare("
-        SELECT COALESCE(p.jersey_size,'?') AS sz, COUNT(*) AS c
+        SELECT COALESCE(UPPER(TRIM(p.jersey_size)),'') AS sz, COUNT(*) AS c
         FROM registrations r
         LEFT JOIN user_profiles p ON p.user_id = r.user_id
         WHERE r.event_id = ?
-        GROUP BY COALESCE(p.jersey_size,'?')
-        ORDER BY FIELD(COALESCE(p.jersey_size,'?'),'XS','S','M','L','XL','XXL','XXXL','?'), COALESCE(p.jersey_size,'?')
+        GROUP BY COALESCE(UPPER(TRIM(p.jersey_size)),'')
     ");
     $jStmt->execute([$event['id']]);
-    $jerseySizes = $jStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    foreach ($jStmt->fetchAll(PDO::FETCH_KEY_PAIR) as $sz => $cnt) {
+        $sz = strtoupper(trim($sz));
+        if (isset($jerseyData[$sz])) {
+            $jerseyData[$sz] = (int)$cnt;
+        } else {
+            $jerseyOther += (int)$cnt; // kosong atau ukuran tak dikenal
+        }
+    }
 }
+$jerseyTotal = array_sum($jerseyData) + $jerseyOther;
 
 // ══════════════════════════════════════════════════════════════════════
 // MAIN LIST QUERY
@@ -297,15 +306,40 @@ $exportUrl = '?' . http_build_query(array_filter([
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
-.kpi-ship { background:var(--surface,#1e1e1e);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s; }
-.kpi-ship:hover,.kpi-ship.active { border-color:var(--primary); }
-.kpi-ship .kv { font-size:22px;font-weight:800;color:#fff;line-height:1; }
-.kpi-ship .kl { font-size:10px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
-.kpi-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0; }
-/* Jersey size pills */
-.jsize-pill { background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:6px 12px;text-align:center; }
-.jsize-pill .jv { font-size:18px;font-weight:800;color:var(--primary); }
-.jsize-pill .jl { font-size:10px;color:var(--gray-light); }
+/* KPI strip — satu baris horizontal */
+.kpi-strip { display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-bottom:12px; }
+.kpi-strip::-webkit-scrollbar { height:3px; }
+.kpi-strip::-webkit-scrollbar-track { background:transparent; }
+.kpi-strip::-webkit-scrollbar-thumb { background:rgba(249,115,22,0.3);border-radius:100px; }
+.kpi-ship {
+  background:var(--surface,#1e1e1e);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+  transition:border-color .2s,background .2s;
+  flex-shrink:0;
+  min-width:120px;
+}
+.kpi-ship:hover { background:rgba(249,115,22,0.05); }
+.kpi-ship.active { border-color:var(--primary);background:rgba(249,115,22,0.07); }
+.kpi-ship .kv { font-size:20px;font-weight:800;color:#fff;line-height:1; }
+.kpi-ship .kl { font-size:9px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px;margin-top:2px; }
+.kpi-icon { width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0; }
+.kpi-progress { flex:1;min-width:160px;padding:10px 14px;gap:8px;cursor:default; }
+/* Jersey size inline */
+.jsize-row { display:flex;align-items:center;gap:0;flex-wrap:wrap; }
+.jsize-item { display:flex;align-items:center;gap:6px;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.07); }
+.jsize-item:last-child { border-right:none; }
+.jsize-item .js-label { font-size:11px;font-weight:700;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px; }
+.jsize-item .js-val { font-size:16px;font-weight:800;color:#fff; }
+.jsize-item.js-has-data .js-val { color:var(--primary); }
+.jsize-item.js-total { background:rgba(255,255,255,0.02);border-radius:8px;border:none;margin-left:4px; }
+.jsize-item.js-total .js-label { color:var(--gray-light); }
+.jsize-item.js-total .js-val { color:var(--gray-light);font-size:14px; }
 /* Bulk bar — fixed inside main-content, tidak overlap sidebar */
 #bulkBar {
   display:none;
@@ -390,63 +424,65 @@ tr.selected td { background:rgba(249,115,22,0.06) !important; }
       </div>
       <?php endif; ?>
 
-      <!-- ══ KPI TILES ══ -->
-      <div class="row g-2 mb-3">
+      <!-- ══ KPI STRIP — satu baris horizontal ══ -->
+      <div class="kpi-strip">
         <?php
         $kpiDefs = [
-            ['not_ready', $kpi['not_ready'], 'Belum Siap',  '#6b7280', 'fa-box-open'],
-            ['preparing', $kpi['preparing'], 'Disiapkan',   '#f59e0b', 'fa-box'],
-            ['shipped',   $kpi['shipped'],   'Dikirim',     '#3b82f6', 'fa-shipping-fast'],
-            ['delivered', $kpi['delivered'], 'Terkirim',    '#22c55e', 'fa-check-circle'],
-            ['no_address',$kpi['no_address'],'Alamat Kosong','#ef4444','fa-exclamation-triangle'],
+            ['not_ready', $kpi['not_ready'], 'Belum Siap',   '#6b7280', 'fa-box-open'],
+            ['preparing', $kpi['preparing'], 'Disiapkan',    '#f59e0b', 'fa-box'],
+            ['shipped',   $kpi['shipped'],   'Dikirim',      '#3b82f6', 'fa-shipping-fast'],
+            ['delivered', $kpi['delivered'], 'Terkirim',     '#22c55e', 'fa-check-circle'],
+            ['no_address',$kpi['no_address'],'Alamat Kosong','#ef4444', 'fa-exclamation-triangle'],
         ];
         foreach ($kpiDefs as [$val, $count, $label, $color, $icon]):
         ?>
-        <div class="col-6 col-md-4 col-xl-2">
-          <div class="kpi-ship <?= $filterStatus === $val ? 'active' : '' ?>"
-               onclick="filterByStatus('<?= $val ?>')" title="Filter: <?= $label ?>">
-            <div class="kpi-icon" style="background:<?= $color ?>22;color:<?= $color ?>;"><i class="fa <?= $icon ?>"></i></div>
-            <div>
-              <div class="kv" style="color:<?= $count > 0 && $val === 'no_address' ? '#ef4444' : '#fff' ?>;"><?= $count ?></div>
-              <div class="kl"><?= $label ?></div>
-            </div>
+        <div class="kpi-ship <?= $filterStatus === $val ? 'active' : '' ?>"
+             onclick="filterByStatus('<?= $val ?>')" title="Klik untuk filter: <?= $label ?>">
+          <div class="kpi-icon" style="background:<?= $color ?>20;color:<?= $color ?>;"><i class="fa <?= $icon ?>"></i></div>
+          <div>
+            <div class="kv" style="color:<?= ($count > 0 && $val === 'no_address') ? '#ef4444' : '#fff' ?>;"><?= $count ?></div>
+            <div class="kl"><?= $label ?></div>
           </div>
         </div>
         <?php endforeach; ?>
-        <div class="col-6 col-md-4 col-xl-2">
-          <div class="kpi-ship" style="cursor:default;flex-direction:column;align-items:flex-start;gap:6px;">
-            <div style="font-size:10px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px;">Selesai Terkirim</div>
-            <div style="display:flex;align-items:center;gap:8px;width:100%;">
-              <div style="flex:1;height:6px;border-radius:100px;background:rgba(255,255,255,0.06);overflow:hidden;">
-                <div style="height:100%;width:<?= $kpiDonePercent ?>%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:100px;"></div>
-              </div>
-              <span style="font-size:13px;font-weight:800;color:#22c55e;"><?= $kpiDonePercent ?>%</span>
-            </div>
-            <div style="font-size:10px;color:var(--gray-light);"><?= $kpi['delivered'] ?> / <?= $kpiTotal ?> peserta</div>
+        <!-- Progress tile -->
+        <div class="kpi-ship kpi-progress" style="min-width:200px;flex-direction:column;align-items:flex-start;gap:6px;cursor:default;">
+          <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+            <span style="font-size:9px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.5px;">Selesai Terkirim</span>
+            <span style="font-size:14px;font-weight:800;color:#22c55e;"><?= $kpiDonePercent ?>%</span>
           </div>
+          <div style="width:100%;height:5px;border-radius:100px;background:rgba(255,255,255,0.06);overflow:hidden;">
+            <div style="height:100%;width:<?= $kpiDonePercent ?>%;background:linear-gradient(90deg,#22c55e,#4ade80);border-radius:100px;transition:width .4s;"></div>
+          </div>
+          <div style="font-size:10px;color:var(--gray-light);"><?= $kpi['delivered'] ?> dari <?= $kpiTotal ?> peserta</div>
         </div>
       </div>
 
-      <!-- ══ JERSEY SIZE SUMMARY ══ -->
-      <?php if (!empty($jerseySizes)): ?>
-      <div style="background:var(--surface,#1e1e1e);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
-        <div style="font-size:10px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-          <i class="fa fa-tshirt" style="color:var(--primary);"></i> Ringkasan Ukuran Jersey
+      <!-- ══ JERSEY SIZE SUMMARY — satu baris inline ══ -->
+      <div style="background:var(--surface,#1e1e1e);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <i class="fa fa-tshirt" style="color:var(--primary);font-size:13px;"></i>
+          <span style="font-size:10px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.6px;font-weight:600;">Jersey</span>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-          <?php foreach ($jerseySizes as $size => $count): ?>
-          <div class="jsize-pill">
-            <div class="jv"><?= $count ?></div>
-            <div class="jl"><?= sanitize($size) ?></div>
+        <div class="jsize-row" style="flex:1;">
+          <?php foreach ($jerseyOrder as $sz): $cnt = $jerseyData[$sz]; ?>
+          <div class="jsize-item <?= $cnt > 0 ? 'js-has-data' : '' ?>">
+            <span class="js-label"><?= $sz ?></span>
+            <span class="js-val"><?= $cnt ?></span>
           </div>
           <?php endforeach; ?>
-          <div class="jsize-pill" style="background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08);">
-            <div class="jv" style="color:var(--gray-light);"><?= array_sum($jerseySizes) ?></div>
-            <div class="jl">Total</div>
+          <?php if ($jerseyOther > 0): ?>
+          <div class="jsize-item" style="color:var(--gray-light);">
+            <span class="js-label">Lainnya</span>
+            <span class="js-val" style="color:var(--gray-light);font-size:14px;"><?= $jerseyOther ?></span>
+          </div>
+          <?php endif; ?>
+          <div class="jsize-item js-total">
+            <span class="js-label">Total</span>
+            <span class="js-val"><?= $jerseyTotal ?></span>
           </div>
         </div>
       </div>
-      <?php endif; ?>
 
       <!-- ══ FILTER BAR ══ -->
       <div class="form-card mb-3" style="padding:16px;">

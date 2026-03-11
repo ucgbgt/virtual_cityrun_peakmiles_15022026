@@ -71,7 +71,7 @@ $csrf = generateCSRFToken();
   <div class="main-content">
     <div class="topbar">
       <div class="d-flex align-items-center gap-3">
-        <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;display:none;" class="d-lg-none">
+        <button id="sidebarToggle" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;" class="d-lg-none">
           <i class="fa fa-bars"></i>
         </button>
         <div>
@@ -798,11 +798,7 @@ function joinBayarSekarang() {
   });
 }
 
-// Show sidebar toggle on mobile
 document.addEventListener('DOMContentLoaded', function() {
-  const toggle = document.getElementById('sidebarToggle');
-  if (toggle) toggle.style.display = 'block';
-  
   // Handle form submission
   document.getElementById('submitForm')?.addEventListener('submit', function(e) {
     const btn = this.querySelector('button[type="submit"]');

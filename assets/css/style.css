@@ -914,9 +914,35 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.2; }
   justify-content: center;
 }
 
+/* ===== SIDEBAR OVERLAY ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
 /* ===== RESPONSIVE ===== */
+
+/* Prevent horizontal scroll globally — main fix */
+html, body { overflow-x: hidden; max-width: 100%; }
+
+/* Tables always scrollable horizontally */
+.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Modals always fit screen horizontally */
+.modal-box { margin: 16px; }
+
+/* ── Large tablet (≤ 992px) ── */
 @media (max-width: 992px) {
-  .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+  .sidebar {
+    transform: translateX(-260px);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+  }
   .sidebar.open { transform: translateX(0); }
   .main-content { margin-left: 0; }
   .auth-left { display: none; }
@@ -924,15 +950,132 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.2; }
   .hero-stats { gap: 20px; }
   .hero-circle { width: 320px; height: 320px; }
   .hero-circle-inner { width: 200px; height: 200px; font-size: 70px; }
+  .topbar { padding: 14px 20px; }
+  .page-content { padding: 20px; }
+  .form-card { padding: 28px; }
 }
 
+/* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
-  .hero { min-height: auto; padding: 80px 0; }
+  /* Hero */
+  .hero { min-height: auto; padding: 70px 0 50px; }
   .hero-visual { display: none; }
-  .section { padding: 60px 0; }
-  .page-content { padding: 16px; }
-  .topbar { padding: 12px 16px; }
+  .hero-desc { font-size: 15px; margin-bottom: 24px; }
+  .hero-stats { flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+  .hero-stat-val { font-size: 26px; }
+  .floating-card { display: none; }
+
+  /* Sections */
+  .section { padding: 50px 0; }
+  .section-desc { margin-bottom: 36px; font-size: 14px; }
+
+  /* Dashboard layout */
+  .page-content { padding: 14px; }
+  .topbar { padding: 10px 14px; gap: 8px; flex-wrap: nowrap; }
+  .topbar-title { font-size: 15px; }
+  .topbar .d-flex.gap-2 { gap: 6px !important; }
+  .btn-sm-custom { padding: 6px 10px; font-size: 12px; }
+
+  /* Form card */
+  .form-card { padding: 18px 16px; }
+
+  /* Stat cards */
+  .stat-card { padding: 18px; }
+  .stat-card-value { font-size: 30px; }
+
+  /* Progress section */
+  .progress-section { padding: 20px; }
+  .progress-km { font-size: 34px; }
+
+  /* Table */
+  .table-custom th, .table-custom td { padding: 10px 12px; }
+  .table-header { padding: 14px 16px; }
+
+  /* Auth */
+  .auth-right { padding: 28px 18px; }
+  .auth-title { font-size: 22px; }
+
+  /* Footer bottom */
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+  .footer { padding: 40px 0 24px; }
+
+  /* Modal */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-box {
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 90vh;
+    padding: 24px 20px;
+    max-width: 100%;
+    width: 100%;
+    border-bottom: none;
+  }
+
+  /* Finisher banner */
+  .finisher-banner { padding: 22px; }
+  .finisher-title { font-size: 22px; }
+
+  /* Racepack card */
+  .racepack-card { padding: 24px 20px; }
+}
+
+/* ── Small phone (≤ 576px) ── */
+@media (max-width: 575.98px) {
+  /* Container padding */
+  .container { padding-left: 14px; padding-right: 14px; }
+
+  /* Hero */
+  .hero { padding: 60px 0 40px; }
+  .hero-badge { font-size: 11px; padding: 5px 12px; }
+  .hero-stat-val { font-size: 22px; }
+  .hero-stat-label { font-size: 10px; }
+
+  /* Topbar — hide text labels if needed, keep icons */
+  .topbar { padding: 8px 12px; }
+  .topbar-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+
+  /* Auth */
+  .auth-right { padding: 20px 14px; }
+  .auth-title { font-size: 20px; }
+  .auth-subtitle { font-size: 13px; }
+
+  /* Form card */
+  .form-card { padding: 16px 14px; border-radius: var(--radius); }
+
+  /* Stat card */
+  .stat-card { padding: 14px; }
+  .stat-card-value { font-size: 26px; }
+  .stat-card-label { font-size: 11px; }
+
+  /* Buttons */
+  .btn-primary-custom, .btn-outline-custom { padding: 10px 18px; font-size: 14px; }
+
+  /* Footer bottom */
+  .footer-bottom { font-size: 11px; }
+
+  /* Modal */
+  .modal-box { padding: 20px 16px; }
+  .modal-title { font-size: 17px; margin-bottom: 18px; }
+
+  /* Tables — allow horizontal scroll without body scroll */
   .table-container { overflow-x: auto; }
+
+  /* Section */
+  .section { padding: 40px 0; }
+  .card-custom { padding: 20px; }
+  .benefit-card { padding: 24px 18px; }
+
+  /* Progress section */
+  .progress-section { padding: 16px; }
+  .progress-km { font-size: 28px; }
+
+  /* Page content */
+  .page-content { padding: 10px; }
+}
+
+/* ── Sidebar toggle always visible on mobile ── */
+@media (max-width: 991.98px) {
+  #sidebarToggle { display: inline-flex !important; align-items: center; justify-content: center; }
 }
 
 /* ===== SCROLLBAR ===== */

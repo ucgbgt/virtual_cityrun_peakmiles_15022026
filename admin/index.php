@@ -298,7 +298,7 @@ $csrf   = generateCSRFToken();
       <div class="row g-3 mb-3">
 
         <!-- Col A: Revenue + Payment bar + Event progress -->
-        <div class="col-lg-3">
+        <div class="col-md-6 col-lg-3">
           <div class="cc h-100" style="display:flex;flex-direction:column;gap:12px;">
             <div class="cc-title"><i class="fa fa-wallet"></i> Revenue</div>
             <!-- Revenue numbers -->
@@ -351,7 +351,7 @@ $csrf   = generateCSRFToken();
         </div>
 
         <!-- Col B: 2 Donuts stacked -->
-        <div class="col-lg-3">
+        <div class="col-md-6 col-lg-3">
           <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
             <!-- Donut Kategori -->
             <div>
@@ -399,7 +399,7 @@ $csrf   = generateCSRFToken();
         </div>
 
         <!-- Col C: Activity bars stacked -->
-        <div class="col-lg-3">
+        <div class="col-md-6 col-lg-3">
           <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
             <div>
               <div class="cc-title"><i class="fa fa-user-plus"></i> Registrasi 7 Hari</div>
@@ -413,7 +413,7 @@ $csrf   = generateCSRFToken();
         </div>
 
         <!-- Col D: Leaderboard + Shipping -->
-        <div class="col-lg-3">
+        <div class="col-md-6 col-lg-3">
           <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
             <div>
               <div class="cc-title"><i class="fa fa-medal"></i> Leaderboard Top 5</div>
@@ -462,7 +462,7 @@ $csrf   = generateCSRFToken();
       <!-- ══ ROW 3: PROGRESS + OPERATIONS ══ -->
       <div class="row g-3">
         <!-- Progress distribution -->
-        <div class="col-lg-4">
+        <div class="col-md-12 col-lg-4">
           <div class="cc h-100">
             <div class="cc-title"><i class="fa fa-chart-bar"></i> Distribusi Progress</div>
             <div style="height:160px;"><canvas id="chartProgress"></canvas></div>
@@ -470,7 +470,7 @@ $csrf   = generateCSRFToken();
         </div>
 
         <!-- Pending submissions -->
-        <div class="col-lg-5">
+        <div class="col-md-7 col-lg-5">
           <div class="cc h-100">
             <div class="cc-title" style="margin-bottom:10px;">
               <i class="fa fa-clock" style="color:#f59e0b;"></i> Submission Pending
@@ -509,7 +509,7 @@ $csrf   = generateCSRFToken();
         </div>
 
         <!-- Recent finishers + submission stats -->
-        <div class="col-lg-3">
+        <div class="col-md-5 col-lg-3">
           <div class="cc h-100" style="display:flex;flex-direction:column;gap:14px;">
             <!-- Submission stats compact -->
             <div>
@@ -765,10 +765,6 @@ document.getElementById('addParticipantForm')?.addEventListener('submit', functi
   btn.disabled = true;
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-  const toggle = document.getElementById('sidebarToggle');
-  if (toggle) toggle.style.display = 'block';
-});
 </script>
 </body>
 </html>

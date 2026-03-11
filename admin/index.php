@@ -191,18 +191,29 @@ $csrf   = generateCSRFToken();
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800;900&family=Saira:wght@700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-.chart-card { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px; }
-.chart-card-title { font-weight:700;color:#fff;font-size:14px;margin-bottom:16px;display:flex;align-items:center;gap:8px; }
-.chart-card-title i { color:var(--primary); }
-.leader-row { display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border); }
-.leader-row:last-child { border-bottom:none; }
-.leader-rank { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0; }
-.rank-1 { background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff; }
-.rank-2 { background:linear-gradient(135deg,#9ca3af,#6b7280);color:#fff; }
-.rank-3 { background:linear-gradient(135deg,#f97316,#ea580c);color:#fff; }
-.rank-other { background:rgba(255,255,255,0.06);color:var(--gray-light); }
-.revenue-pill { background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px 16px;text-align:center; }
-.countdown-ring { width:90px;height:90px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid rgba(249,115,22,0.3);flex-shrink:0; }
+/* ── Dashboard compact overrides ── */
+.page-content { padding: 18px 20px !important; }
+.cc { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px; }
+.cc-title { font-size:11px;font-weight:700;color:var(--gray-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;align-items:center;gap:6px; }
+.cc-title i { color:var(--primary);font-size:11px; }
+/* KPI strip */
+.kpi-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px; }
+.kpi-icon { width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0; }
+.kpi-val { font-size:20px;font-weight:800;color:#fff;line-height:1; }
+.kpi-lbl { font-size:10px;color:var(--gray-light);margin-top:2px; }
+/* Leaderboard */
+.lr { display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04); }
+.lr:last-child { border-bottom:none; }
+.lrank { width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0; }
+.rank-1{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.rank-2{background:linear-gradient(135deg,#9ca3af,#6b7280);color:#fff;}
+.rank-3{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;}
+.rank-o{background:rgba(255,255,255,0.06);color:var(--gray-light);}
+/* Pending table compact */
+.tbl-scroll { overflow-y:auto;max-height:300px; }
+.tbl-scroll::-webkit-scrollbar{width:4px}
+.tbl-scroll::-webkit-scrollbar-track{background:transparent}
+.tbl-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
 </style>
 </head>
 <body>
@@ -229,378 +240,318 @@ $csrf   = generateCSRFToken();
 
     <div class="page-content">
       <?php $flash = getFlash(); if ($flash): ?>
-      <div class="alert-custom alert-<?= $flash['type'] === 'success' ? 'success' : ($flash['type'] === 'warning' ? 'warning' : 'danger') ?>" style="margin-bottom:20px;">
+      <div class="alert-custom alert-<?= $flash['type'] === 'success' ? 'success' : ($flash['type'] === 'warning' ? 'warning' : 'danger') ?>" style="margin-bottom:14px;">
         <i class="fa fa-<?= $flash['type'] === 'success' ? 'check-circle' : 'exclamation-circle' ?>"></i> <?= $flash['message'] ?>
       </div>
       <?php endif; ?>
 
-      <!-- ═══════════════════ ROW 1: Stat Cards ═══════════════════ -->
-      <div class="row g-4 mb-4">
-        <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-card-icon" style="background:rgba(59,130,246,0.15);color:var(--info);"><i class="fa fa-users"></i></div>
-            <div class="stat-card-label">Total Peserta</div>
-            <div class="stat-card-value counter" data-target="<?= $totalRegistrations ?>"><?= $totalRegistrations ?></div>
-            <div class="stat-card-sub"><?= $totalUsers ?> akun terdaftar</div>
+      <?php
+      $revTotal  = max(1, (int)$revenueStats['total']);
+      $paidPct   = round((int)$revenueStats['paid_count']   / $revTotal * 100);
+      $manualPct = round((int)$revenueStats['manual_count'] / $revTotal * 100);
+      $unpaidPct = 100 - $paidPct - $manualPct;
+      $totalSubs = $approvedSubs + $rejectedSubs + $pendingSubs;
+      $dayColor  = $eventDaysLeft <= 7 ? '#ef4444' : ($eventDaysLeft <= 14 ? '#f59e0b' : '#f97316');
+      ?>
+
+      <!-- ══ ROW 1: 6 KPI TILES ══ -->
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(59,130,246,0.15);color:#60a5fa;"><i class="fa fa-users"></i></div>
+            <div><div class="kpi-val"><?= $totalRegistrations ?></div><div class="kpi-lbl">Peserta</div></div>
           </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-card-icon" style="background:rgba(249,115,22,0.15);color:var(--primary);"><i class="fa fa-trophy"></i></div>
-            <div class="stat-card-label">Finisher</div>
-            <div class="stat-card-value counter" data-target="<?= $totalFinishers ?>"><?= $totalFinishers ?></div>
-            <div class="stat-card-sub"><?= $totalRegistrations > 0 ? round(($totalFinishers/$totalRegistrations)*100) : 0 ?>% dari peserta</div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(249,115,22,0.15);color:#f97316;"><i class="fa fa-trophy"></i></div>
+            <div><div class="kpi-val"><?= $totalFinishers ?></div><div class="kpi-lbl">Finisher</div></div>
           </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-card-icon" style="background:rgba(245,158,11,0.15);color:var(--warning);"><i class="fa fa-clock"></i></div>
-            <div class="stat-card-label">Submission Pending</div>
-            <div class="stat-card-value counter" data-target="<?= $pendingSubs ?>"><?= $pendingSubs ?></div>
-            <div class="stat-card-sub">perlu review</div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;"><i class="fa fa-running"></i></div>
+            <div><div class="kpi-val"><?= number_format((float)$totalKmApproved,0) ?></div><div class="kpi-lbl">Total KM</div></div>
           </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-card-icon" style="background:rgba(34,197,94,0.15);color:var(--success);"><i class="fa fa-running"></i></div>
-            <div class="stat-card-label">Total KM Approved</div>
-            <div class="stat-card-value"><?= number_format((float)$totalKmApproved, 1) ?></div>
-            <div class="stat-card-sub">kilometer total</div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(249,115,22,0.15);color:#f97316;"><i class="fa fa-wallet"></i></div>
+            <div><div class="kpi-val" style="font-size:14px;margin-top:1px;">Rp <?= number_format(((int)$revenueStats['rev_10k']+(int)$revenueStats['rev_21k'])/1000,0)?>rb</div><div class="kpi-lbl">Revenue</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;"><i class="fa fa-clock"></i></div>
+            <div><div class="kpi-val" style="color:<?= $pendingSubs > 0 ? '#f59e0b' : '#22c55e' ?>;"><?= $pendingSubs ?></div><div class="kpi-lbl">Pending Review</div></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(<?= $eventDaysLeft<=7 ? '239,68,68' : '249,115,22' ?>,0.15);color:<?= $dayColor ?>;"><i class="fa fa-calendar-alt"></i></div>
+            <div><div class="kpi-val" style="color:<?= $dayColor ?>;"><?= $eventDaysLeft ?></div><div class="kpi-lbl">Hari Tersisa</div></div>
           </div>
         </div>
       </div>
 
-      <!-- ═══════════════════ ROW 2: Revenue + Countdown ═══════════════════ -->
-      <div class="row g-4 mb-4">
-        <!-- Revenue Summary -->
-        <div class="col-lg-8">
-          <div class="chart-card h-100">
-            <div class="chart-card-title"><i class="fa fa-wallet"></i> Revenue & Status Pembayaran</div>
-            <div class="row g-3 mb-4">
-              <div class="col-sm-4">
-                <div class="revenue-pill">
-                  <div style="font-size:11px;color:var(--gray-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Total Revenue</div>
-                  <div style="font-size:22px;font-weight:800;color:var(--primary);">
-                    Rp <?= number_format((int)$revenueStats['rev_10k'] + (int)$revenueStats['rev_21k'], 0, ',', '.') ?>
-                  </div>
-                </div>
-              </div>
-              <div class="col-sm-4">
-                <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:14px 16px;text-align:center;">
-                  <div style="font-size:11px;color:var(--gray-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Rev 10K</div>
-                  <div style="font-size:18px;font-weight:800;color:#22c55e;">Rp <?= number_format((int)$revenueStats['rev_10k'], 0, ',', '.') ?></div>
-                  <div style="font-size:11px;color:var(--gray-light);margin-top:2px;"><?= (int)$revenueStats['count_10k'] ?> peserta</div>
-                </div>
-              </div>
-              <div class="col-sm-4">
-                <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px 16px;text-align:center;">
-                  <div style="font-size:11px;color:var(--gray-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Rev 21K</div>
-                  <div style="font-size:18px;font-weight:800;color:#60a5fa;">Rp <?= number_format((int)$revenueStats['rev_21k'], 0, ',', '.') ?></div>
-                  <div style="font-size:11px;color:var(--gray-light);margin-top:2px;"><?= (int)$revenueStats['count_21k'] ?> peserta</div>
-                </div>
-              </div>
-            </div>
-            <!-- Payment status breakdown bar -->
-            <?php
-            $revTotal   = max(1, (int)$revenueStats['total']);
-            $paidPct    = round((int)$revenueStats['paid_count']   / $revTotal * 100);
-            $manualPct  = round((int)$revenueStats['manual_count'] / $revTotal * 100);
-            $unpaidPct  = 100 - $paidPct - $manualPct;
-            ?>
-            <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;">
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-light);">
-                <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
-                Lunas <strong style="color:#fff;"><?= (int)$revenueStats['paid_count'] ?></strong>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-light);">
-                <span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>
-                Manual Admin <strong style="color:#fff;"><?= (int)$revenueStats['manual_count'] ?></strong>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-light);">
-                <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
-                Belum Bayar <strong style="color:#fff;"><?= (int)$revenueStats['unpaid_count'] ?></strong>
-              </div>
-            </div>
-            <div style="height:10px;border-radius:100px;overflow:hidden;background:rgba(255,255,255,0.05);">
-              <div style="height:100%;display:flex;">
-                <div style="width:<?= $paidPct ?>%;background:#22c55e;transition:width .8s;"></div>
-                <div style="width:<?= $manualPct ?>%;background:#60a5fa;transition:width .8s;"></div>
-                <div style="width:<?= $unpaidPct ?>%;background:#ef4444;transition:width .8s;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- ══ ROW 2: ANALYTICS 4-COL ══ -->
+      <div class="row g-3 mb-3">
 
-        <!-- Event Countdown -->
-        <div class="col-lg-4">
-          <div class="chart-card h-100 d-flex flex-column justify-content-between">
-            <div class="chart-card-title"><i class="fa fa-calendar-alt"></i> Status Event</div>
-            <?php if ($event): ?>
-            <div class="d-flex align-items-center gap-16" style="gap:20px;margin-bottom:16px;">
-              <div class="countdown-ring" style="border-color:<?= $eventDaysLeft <= 7 ? '#ef4444' : ($eventDaysLeft <= 14 ? '#f59e0b' : 'rgba(249,115,22,0.4)') ?>;">
-                <div style="font-size:28px;font-weight:900;color:<?= $eventDaysLeft <= 7 ? '#ef4444' : 'var(--primary)' ?>;line-height:1;"><?= $eventDaysLeft ?></div>
-                <div style="font-size:10px;color:var(--gray-light);text-transform:uppercase;">hari lagi</div>
+        <!-- Col A: Revenue + Payment bar + Event progress -->
+        <div class="col-lg-3">
+          <div class="cc h-100" style="display:flex;flex-direction:column;gap:12px;">
+            <div class="cc-title"><i class="fa fa-wallet"></i> Revenue</div>
+            <!-- Revenue numbers -->
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.15);border-radius:8px;padding:10px;text-align:center;">
+                <div style="font-size:10px;color:var(--gray-light);margin-bottom:3px;">10K</div>
+                <div style="font-size:14px;font-weight:800;color:#22c55e;">Rp<?= number_format((int)$revenueStats['rev_10k']/1000,0)?>rb</div>
+                <div style="font-size:10px;color:var(--gray-light);"><?= (int)$revenueStats['count_10k'] ?> org</div>
               </div>
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:4px;"><?= sanitize($event['name']) ?></div>
-                <div style="font-size:12px;color:var(--gray-light);margin-bottom:2px;">
-                  <i class="fa fa-calendar" style="margin-right:4px;"></i><?= date('d M Y', strtotime($event['start_date'])) ?>
+              <div style="flex:1;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:10px;text-align:center;">
+                <div style="font-size:10px;color:var(--gray-light);margin-bottom:3px;">21K</div>
+                <div style="font-size:14px;font-weight:800;color:#60a5fa;">Rp<?= number_format((int)$revenueStats['rev_21k']/1000,0)?>rb</div>
+                <div style="font-size:10px;color:var(--gray-light);"><?= (int)$revenueStats['count_21k'] ?> org</div>
+              </div>
+            </div>
+            <!-- Payment legend + bar -->
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+                <?php foreach([['#22c55e','Lunas',(int)$revenueStats['paid_count']],['#60a5fa','Manual',(int)$revenueStats['manual_count']],['#ef4444','Belum',(int)$revenueStats['unpaid_count']]] as [$c,$l,$n]): ?>
+                <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--gray-light);">
+                  <span style="width:7px;height:7px;border-radius:50%;background:<?=$c?>;display:inline-block;flex-shrink:0;"></span><?=$l?> <strong style="color:#fff;"><?=$n?></strong>
                 </div>
-                <div style="font-size:12px;color:var(--gray-light);">
-                  <i class="fa fa-flag-checkered" style="margin-right:4px;"></i><?= date('d M Y', strtotime($event['end_date'])) ?>
+                <?php endforeach; ?>
+              </div>
+              <div style="height:6px;border-radius:100px;overflow:hidden;background:rgba(255,255,255,0.05);">
+                <div style="height:100%;display:flex;">
+                  <div style="width:<?= $paidPct ?>%;background:#22c55e;"></div>
+                  <div style="width:<?= $manualPct ?>%;background:#60a5fa;"></div>
+                  <div style="width:<?= $unpaidPct ?>%;background:#ef4444;"></div>
                 </div>
               </div>
             </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-light);margin-bottom:6px;">
-                <span>Progress Event</span><span style="color:var(--primary);font-weight:700;"><?= $eventProgress ?>%</span>
+            <!-- Event progress -->
+            <?php if ($event): ?>
+            <div style="margin-top:auto;padding-top:10px;border-top:1px solid var(--border);">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gray-light);margin-bottom:5px;">
+                <span><i class="fa fa-calendar-alt" style="margin-right:3px;"></i>Progress Event</span>
+                <span style="color:<?=$dayColor?>;font-weight:700;"><?= $eventProgress ?>%</span>
               </div>
-              <div style="height:8px;border-radius:100px;overflow:hidden;background:rgba(255,255,255,0.05);">
-                <div style="height:100%;width:<?= $eventProgress ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);transition:width 1s;border-radius:100px;"></div>
+              <div style="height:5px;border-radius:100px;overflow:hidden;background:rgba(255,255,255,0.05);">
+                <div style="height:100%;width:<?= $eventProgress ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:100px;"></div>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gray-light);margin-top:5px;">
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--gray-light);margin-top:4px;">
                 <span><?= date('d M', strtotime($event['start_date'])) ?></span>
                 <span><?= date('d M', strtotime($event['end_date'])) ?></span>
               </div>
             </div>
-            <?php else: ?>
-            <div style="text-align:center;padding:20px;color:var(--gray-light);">Tidak ada event aktif</div>
             <?php endif; ?>
           </div>
         </div>
-      </div>
 
-      <!-- ═══════════════════ ROW 3: Tiga Donut ═══════════════════ -->
-      <div class="row g-4 mb-4">
-        <!-- Donut: Kategori -->
-        <div class="col-md-4">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa fa-running"></i> Kategori Peserta</div>
-            <div style="position:relative;height:180px;display:flex;align-items:center;justify-content:center;">
-              <canvas id="chartKategori"></canvas>
-              <div style="position:absolute;text-align:center;pointer-events:none;">
-                <div style="font-size:22px;font-weight:800;color:#fff;"><?= (int)$revenueStats['total'] ?></div>
-                <div style="font-size:11px;color:var(--gray-light);">peserta</div>
+        <!-- Col B: 2 Donuts stacked -->
+        <div class="col-lg-3">
+          <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
+            <!-- Donut Kategori -->
+            <div>
+              <div class="cc-title"><i class="fa fa-running"></i> Kategori</div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="position:relative;width:90px;height:90px;flex-shrink:0;">
+                  <canvas id="chartKategori"></canvas>
+                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+                    <div style="font-size:16px;font-weight:800;color:#fff;"><?= (int)$revenueStats['total'] ?></div>
+                    <div style="font-size:9px;color:var(--gray-light);">total</div>
+                  </div>
+                </div>
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
+                    <span style="font-size:12px;color:var(--gray-light);">10K</span>
+                    <strong style="color:#f97316;font-size:14px;margin-left:auto;"><?= (int)$revenueStats['count_10k'] ?></strong>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>
+                    <span style="font-size:12px;color:var(--gray-light);">21K</span>
+                    <strong style="color:#60a5fa;font-size:14px;margin-left:auto;"><?= (int)$revenueStats['count_21k'] ?></strong>
+                  </div>
+                </div>
               </div>
             </div>
-            <div style="display:flex;justify-content:center;gap:20px;margin-top:12px;">
-              <div style="text-align:center;">
-                <div style="font-size:18px;font-weight:800;color:#f97316;"><?= (int)$revenueStats['count_10k'] ?></div>
-                <div style="font-size:11px;color:var(--gray-light);">10K</div>
-              </div>
-              <div style="text-align:center;">
-                <div style="font-size:18px;font-weight:800;color:#60a5fa;"><?= (int)$revenueStats['count_21k'] ?></div>
-                <div style="font-size:11px;color:var(--gray-light);">21K</div>
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+              <div class="cc-title"><i class="fa fa-credit-card"></i> Status Akun</div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="position:relative;width:90px;height:90px;flex-shrink:0;">
+                  <canvas id="chartStatusAkun"></canvas>
+                </div>
+                <div style="flex:1;">
+                  <?php foreach([['#22c55e','Lunas',(int)$revenueStats['paid_count']],['#60a5fa','Manual',(int)$revenueStats['manual_count']],['#ef4444','Belum',(int)$revenueStats['unpaid_count']]] as [$c,$l,$n]): ?>
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:<?=$c?>;flex-shrink:0;"></span>
+                    <span style="font-size:11px;color:var(--gray-light);"><?=$l?></span>
+                    <strong style="color:<?=$c?>;font-size:13px;margin-left:auto;"><?=$n?></strong>
+                  </div>
+                  <?php endforeach; ?>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Donut: Status Akun -->
-        <div class="col-md-4">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa fa-credit-card"></i> Status Akun</div>
-            <div style="position:relative;height:180px;display:flex;align-items:center;justify-content:center;">
-              <canvas id="chartStatusAkun"></canvas>
+        <!-- Col C: Activity bars stacked -->
+        <div class="col-lg-3">
+          <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <div class="cc-title"><i class="fa fa-user-plus"></i> Registrasi 7 Hari</div>
+              <div style="height:115px;"><canvas id="chartReg7"></canvas></div>
             </div>
-            <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;flex-wrap:wrap;">
-              <div style="text-align:center;">
-                <div style="font-size:16px;font-weight:800;color:#22c55e;"><?= (int)$revenueStats['paid_count'] ?></div>
-                <div style="font-size:10px;color:var(--gray-light);">Lunas</div>
-              </div>
-              <div style="text-align:center;">
-                <div style="font-size:16px;font-weight:800;color:#60a5fa;"><?= (int)$revenueStats['manual_count'] ?></div>
-                <div style="font-size:10px;color:var(--gray-light);">Manual</div>
-              </div>
-              <div style="text-align:center;">
-                <div style="font-size:16px;font-weight:800;color:#ef4444;"><?= (int)$revenueStats['unpaid_count'] ?></div>
-                <div style="font-size:10px;color:var(--gray-light);">Belum Bayar</div>
-              </div>
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+              <div class="cc-title"><i class="fa fa-upload"></i> Submission 7 Hari</div>
+              <div style="height:115px;"><canvas id="chartSub7"></canvas></div>
             </div>
           </div>
         </div>
 
-        <!-- Donut: Pengiriman -->
-        <div class="col-md-4">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa fa-box"></i> Status Pengiriman</div>
-            <div style="position:relative;height:180px;display:flex;align-items:center;justify-content:center;">
-              <canvas id="chartShipping"></canvas>
-            </div>
-            <div style="display:flex;justify-content:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
-              <?php
-              $shipLabels = ['not_ready'=>['Belum','#6b7280'],'preparing'=>['Disiapkan','#f59e0b'],
-                             'shipped'=>['Dikirim','#3b82f6'],'delivered'=>['Terkirim','#22c55e']];
-              foreach ($shipLabels as $k => [$lbl, $col]): ?>
-              <div style="text-align:center;">
-                <div style="font-size:16px;font-weight:800;color:<?= $col ?>;"><?= $shippingStats[$k] ?></div>
-                <div style="font-size:10px;color:var(--gray-light);"><?= $lbl ?></div>
+        <!-- Col D: Leaderboard + Shipping -->
+        <div class="col-lg-3">
+          <div class="cc h-100" style="display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <div class="cc-title"><i class="fa fa-medal"></i> Leaderboard Top 5</div>
+              <?php if (empty($leaderboard)): ?>
+              <div style="text-align:center;padding:16px;color:var(--gray-light);font-size:12px;">Belum ada data</div>
+              <?php else: ?>
+              <?php foreach ($leaderboard as $i => $p):
+                $pct2 = $p['target_km'] > 0 ? min(100, round($p['total_km'] / $p['target_km'] * 100)) : 0;
+                $rankClass = ['rank-1','rank-2','rank-3','rank-o','rank-o'][$i] ?? 'rank-o';
+              ?>
+              <div class="lr">
+                <div class="lrank <?= $rankClass ?>"><?= $i+1 ?></div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    <?= sanitize($p['name']) ?>
+                    <?php if ($p['status']==='finisher'): ?><i class="fa fa-trophy" style="color:#f59e0b;font-size:9px;margin-left:3px;"></i><?php endif; ?>
+                  </div>
+                  <div style="height:2px;background:rgba(255,255,255,0.05);border-radius:100px;margin-top:3px;">
+                    <div style="height:100%;width:<?= $pct2 ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:100px;"></div>
+                  </div>
+                </div>
+                <div style="font-size:13px;font-weight:800;color:var(--primary);flex-shrink:0;margin-left:8px;"><?= number_format($p['total_km'],1) ?><span style="font-size:9px;color:var(--gray-light);font-weight:400;"> km</span></div>
               </div>
               <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+            <!-- Shipping mini -->
+            <div style="border-top:1px solid var(--border);padding-top:12px;">
+              <div class="cc-title"><i class="fa fa-box"></i> Status Jersey</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                <?php foreach(['not_ready'=>['Belum','#6b7280'],'preparing'=>['Siap','#f59e0b'],'shipped'=>['Kirim','#3b82f6'],'delivered'=>['Tiba','#22c55e']] as $k=>[$lbl,$col]): ?>
+                <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:7px;padding:7px 10px;display:flex;align-items:center;gap:8px;">
+                  <span style="width:7px;height:7px;border-radius:50%;background:<?=$col?>;flex-shrink:0;"></span>
+                  <div>
+                    <div style="font-size:14px;font-weight:800;color:<?=$col?>;"><?= $shippingStats[$k] ?></div>
+                    <div style="font-size:9px;color:var(--gray-light);"><?=$lbl?></div>
+                  </div>
+                </div>
+                <?php endforeach; ?>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ═══════════════════ ROW 4: Bar Charts 7-hari ═══════════════════ -->
-      <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa fa-user-plus"></i> Registrasi 7 Hari Terakhir</div>
-            <div style="height:200px;"><canvas id="chartReg7"></canvas></div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa fa-upload"></i> Submission 7 Hari Terakhir</div>
-            <div style="height:200px;"><canvas id="chartSub7"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══════════════════ ROW 5: Progress Dist + Leaderboard ═══════════════════ -->
-      <div class="row g-4 mb-4">
-        <!-- Progress Distribution -->
-        <div class="col-lg-7">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa fa-chart-bar"></i> Distribusi Progress Peserta</div>
-            <div style="height:220px;"><canvas id="chartProgress"></canvas></div>
+      <!-- ══ ROW 3: PROGRESS + OPERATIONS ══ -->
+      <div class="row g-3">
+        <!-- Progress distribution -->
+        <div class="col-lg-4">
+          <div class="cc h-100">
+            <div class="cc-title"><i class="fa fa-chart-bar"></i> Distribusi Progress</div>
+            <div style="height:160px;"><canvas id="chartProgress"></canvas></div>
           </div>
         </div>
 
-        <!-- Leaderboard -->
+        <!-- Pending submissions -->
         <div class="col-lg-5">
-          <div class="chart-card h-100">
-            <div class="chart-card-title"><i class="fa fa-medal"></i> Leaderboard Top 5</div>
-            <?php if (empty($leaderboard)): ?>
-            <div style="text-align:center;padding:30px;color:var(--gray-light);font-size:13px;">Belum ada data</div>
-            <?php else: ?>
-            <?php foreach ($leaderboard as $i => $p):
-              $pct = $p['target_km'] > 0 ? min(100, round($p['total_km'] / $p['target_km'] * 100)) : 0;
-              $rankClass = $i === 0 ? 'rank-1' : ($i === 1 ? 'rank-2' : ($i === 2 ? 'rank-3' : 'rank-other'));
-            ?>
-            <div class="leader-row">
-              <div class="leader-rank <?= $rankClass ?>"><?= $i+1 ?></div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:600;color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                  <?= sanitize($p['name']) ?>
-                  <?php if ($p['status'] === 'finisher'): ?>
-                  <i class="fa fa-trophy" style="color:#f59e0b;font-size:10px;margin-left:4px;"></i>
-                  <?php endif; ?>
-                </div>
-                <div style="font-size:11px;color:var(--gray-light);"><?= $p['category'] ?> · <?= $pct ?>%</div>
-                <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:100px;margin-top:4px;">
-                  <div style="height:100%;width:<?= $pct ?>%;background:linear-gradient(90deg,var(--primary),#fb923c);border-radius:100px;"></div>
-                </div>
-              </div>
-              <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:15px;font-weight:800;color:var(--primary);"><?= number_format($p['total_km'], 1) ?></div>
-                <div style="font-size:10px;color:var(--gray-light);">km</div>
-              </div>
-            </div>
-            <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══════════════════ ROW 6: Submission Status + Pending Table ═══════════════════ -->
-      <div class="form-card mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div style="font-weight:700;color:#fff;"><i class="fa fa-chart-bar" style="color:var(--primary);margin-right:8px;"></i>Status Submission</div>
-          <a href="<?= SITE_URL ?>/admin/submissions" style="font-size:13px;color:var(--primary);text-decoration:none;">Lihat Semua →</a>
-        </div>
-        <?php $totalSubs = $approvedSubs + $rejectedSubs + $pendingSubs; ?>
-        <div class="row g-3 text-center">
-          <div class="col-4">
-            <div style="font-size:28px;font-weight:800;color:var(--warning);"><?= $pendingSubs ?></div>
-            <div style="font-size:11px;color:var(--gray-light);text-transform:uppercase;">Pending</div>
-          </div>
-          <div class="col-4">
-            <div style="font-size:28px;font-weight:800;color:var(--success);"><?= $approvedSubs ?></div>
-            <div style="font-size:11px;color:var(--gray-light);text-transform:uppercase;">Approved</div>
-          </div>
-          <div class="col-4">
-            <div style="font-size:28px;font-weight:800;color:var(--danger);"><?= $rejectedSubs ?></div>
-            <div style="font-size:11px;color:var(--gray-light);text-transform:uppercase;">Rejected</div>
-          </div>
-        </div>
-        <?php if ($totalSubs > 0): ?>
-        <div class="progress-bar-bg mt-3" style="height:8px;">
-          <div style="height:100%;background:linear-gradient(90deg,var(--success) <?= round($approvedSubs/$totalSubs*100) ?>%,var(--warning) <?= round($approvedSubs/$totalSubs*100) ?>% <?= round(($approvedSubs+$pendingSubs)/$totalSubs*100) ?>%,var(--danger) <?= round(($approvedSubs+$pendingSubs)/$totalSubs*100) ?>% 100%);border-radius:100px;"></div>
-        </div>
-        <?php endif; ?>
-      </div>
-
-      <div class="row g-4">
-        <!-- Pending Submissions Table -->
-        <div class="col-lg-8">
-          <div class="table-container">
-            <div class="table-header">
-              <div class="table-title"><i class="fa fa-clock" style="color:var(--warning);margin-right:6px;"></i>Submission Pending</div>
-              <a href="<?= SITE_URL ?>/admin/submissions" style="font-size:13px;color:var(--primary);text-decoration:none;">Semua →</a>
+          <div class="cc h-100">
+            <div class="cc-title" style="margin-bottom:10px;">
+              <i class="fa fa-clock" style="color:#f59e0b;"></i> Submission Pending
+              <a href="<?= SITE_URL ?>/admin/submissions" style="margin-left:auto;font-size:10px;color:var(--primary);text-decoration:none;">Lihat semua →</a>
             </div>
             <?php if (empty($recentPending)): ?>
-            <div style="padding:40px;text-align:center;color:var(--gray-light);">
-              <i class="fa fa-check-circle" style="font-size:36px;margin-bottom:12px;display:block;color:var(--success);opacity:0.5;"></i>
-              Semua submission sudah diproses!
+            <div style="text-align:center;padding:30px;color:var(--gray-light);">
+              <i class="fa fa-check-circle" style="font-size:28px;color:#22c55e;opacity:.5;display:block;margin-bottom:8px;"></i>Semua sudah diproses!
             </div>
             <?php else: ?>
-            <table class="table-custom">
-              <thead>
-                <tr><th>Peserta</th><th>Jarak</th><th>Bukti</th><th>Tgl Lari</th><th>Aksi</th></tr>
-              </thead>
-              <tbody>
+            <div class="tbl-scroll">
+              <table class="table-custom" style="font-size:12px;">
+                <thead><tr><th>Peserta</th><th>Jarak</th><th>Bukti</th><th>Aksi</th></tr></thead>
+                <tbody>
                 <?php foreach ($recentPending as $sub): ?>
                 <tr>
                   <td>
-                    <div style="font-weight:600;color:#fff;"><?= sanitize($sub['user_name']) ?></div>
-                    <div style="font-size:11px;color:var(--gray-light);"><?= sanitize($sub['email']) ?></div>
+                    <div style="font-weight:600;color:#fff;font-size:12px;"><?= sanitize($sub['user_name']) ?></div>
+                    <div style="font-size:10px;color:var(--gray-light);"><?= date('d M', strtotime($sub['run_date'])) ?></div>
                   </td>
-                  <td style="font-weight:700;color:var(--primary);"><?= number_format($sub['distance_km'], 2) ?> km</td>
+                  <td style="font-weight:700;color:var(--primary);"><?= number_format($sub['distance_km'],1) ?> km</td>
+                  <td><img src="<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>" alt="" class="evidence-thumb" onclick="openLightbox('<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>')"></td>
                   <td>
-                    <img src="<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>" alt="Bukti" class="evidence-thumb"
-                         onclick="openLightbox('<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>')">
-                  </td>
-                  <td style="font-size:13px;color:var(--gray-light);"><?= date('d M Y', strtotime($sub['run_date'])) ?></td>
-                  <td>
-                    <div class="d-flex gap-2">
-                      <button onclick="approveSubmission(<?= $sub['id'] ?>)" class="btn-success-custom" style="padding:6px 12px;font-size:12px;"><i class="fa fa-check"></i></button>
-                      <button onclick="showRejectModal(<?= $sub['id'] ?>)" class="btn-danger-custom" style="padding:6px 12px;font-size:12px;"><i class="fa fa-times"></i></button>
+                    <div class="d-flex gap-1">
+                      <button onclick="approveSubmission(<?= $sub['id'] ?>)" class="btn-success-custom" style="padding:4px 10px;font-size:11px;"><i class="fa fa-check"></i></button>
+                      <button onclick="showRejectModal(<?= $sub['id'] ?>)" class="btn-danger-custom" style="padding:4px 10px;font-size:11px;"><i class="fa fa-times"></i></button>
                     </div>
                   </td>
                 </tr>
                 <?php endforeach; ?>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
             <?php endif; ?>
           </div>
         </div>
 
-        <!-- Recent Finishers -->
-        <div class="col-lg-4">
-          <div class="table-container">
-            <div class="table-header">
-              <div class="table-title"><i class="fa fa-trophy" style="color:var(--primary);margin-right:6px;"></i>Finisher Terbaru</div>
+        <!-- Recent finishers + submission stats -->
+        <div class="col-lg-3">
+          <div class="cc h-100" style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Submission stats compact -->
+            <div>
+              <div class="cc-title"><i class="fa fa-chart-pie"></i> Submission</div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <?php foreach([['#f59e0b','Pending',$pendingSubs],['#22c55e','Approved',$approvedSubs],['#ef4444','Rejected',$rejectedSubs]] as [$c,$l,$n]): ?>
+                <div style="text-align:center;">
+                  <div style="font-size:18px;font-weight:800;color:<?=$c?>;"><?=$n?></div>
+                  <div style="font-size:9px;color:var(--gray-light);"><?=$l?></div>
+                </div>
+                <?php endforeach; ?>
+              </div>
+              <?php if ($totalSubs > 0): ?>
+              <div style="height:4px;border-radius:100px;overflow:hidden;background:rgba(255,255,255,0.05);">
+                <div style="height:100%;display:flex;">
+                  <div style="width:<?= round($approvedSubs/$totalSubs*100) ?>%;background:#22c55e;"></div>
+                  <div style="width:<?= round($pendingSubs/$totalSubs*100) ?>%;background:#f59e0b;"></div>
+                  <div style="width:<?= round($rejectedSubs/$totalSubs*100) ?>%;background:#ef4444;"></div>
+                </div>
+              </div>
+              <?php endif; ?>
             </div>
-            <?php if (empty($recentFinishers)): ?>
-            <div style="padding:30px;text-align:center;color:var(--gray-light);font-size:13px;">Belum ada finisher</div>
-            <?php else: ?>
-            <div style="padding:8px;">
-              <?php foreach ($recentFinishers as $f): ?>
-              <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border-bottom:1px solid var(--border);">
-                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;">
-                  <?= strtoupper(substr($f['user_name'], 0, 1)) ?>
+            <!-- Finisher terbaru -->
+            <div style="border-top:1px solid var(--border);padding-top:12px;flex:1;">
+              <div class="cc-title"><i class="fa fa-trophy"></i> Finisher Terbaru</div>
+              <?php if (empty($recentFinishers)): ?>
+              <div style="font-size:11px;color:var(--gray-light);padding:8px 0;">Belum ada finisher</div>
+              <?php else: ?>
+              <?php foreach (array_slice($recentFinishers, 0, 4) as $f): ?>
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#ea580c);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0;">
+                  <?= strtoupper(substr($f['user_name'],0,1)) ?>
                 </div>
                 <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= sanitize($f['user_name']) ?></div>
-                  <div style="font-size:11px;color:var(--gray-light);"><?= $f['category'] ?> · <?= number_format($f['total_km_approved'] ?? 0, 2) ?> km</div>
+                  <div style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= sanitize($f['user_name']) ?></div>
+                  <div style="font-size:10px;color:var(--gray-light);"><?= $f['category'] ?></div>
                 </div>
-                <span class="status-badge badge-finisher" style="font-size:10px;flex-shrink:0;"><i class="fa fa-trophy"></i></span>
+                <i class="fa fa-trophy" style="color:#f59e0b;font-size:11px;flex-shrink:0;"></i>
               </div>
               <?php endforeach; ?>
+              <?php endif; ?>
             </div>
-            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -736,16 +687,17 @@ new Chart(document.getElementById('chartStatusAkun'), {
   options: donutOpts
 });
 
-// ── Donut: Pengiriman ─────────────────────────────────────────────────────────
-new Chart(document.getElementById('chartShipping'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Belum','Disiapkan','Dikirim','Terkirim'],
-    datasets: [{ data: [<?= $shippingStats['not_ready'] ?>,<?= $shippingStats['preparing'] ?>,<?= $shippingStats['shipped'] ?>,<?= $shippingStats['delivered'] ?>],
-      backgroundColor: ['#6b7280','#f59e0b','#3b82f6','#22c55e'],
-      borderWidth: 0, hoverOffset: 6 }]
+// ── Bar shared options (compact) ──────────────────────────────────────────────
+const barOpts = (tooltipSuffix) => ({
+  responsive: true, maintainAspectRatio: false,
+  scales: {
+    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 }, maxTicksLimit: 4 },
+         grid: { color: 'rgba(255,255,255,0.04)' } },
+    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
   },
-  options: donutOpts
+  plugins: { legend: { display: false }, tooltip: { callbacks: {
+    label: ctx => ' ' + ctx.raw + ' ' + tooltipSuffix
+  }}}
 });
 
 // ── Bar: Registrasi 7 hari ────────────────────────────────────────────────────
@@ -753,23 +705,10 @@ new Chart(document.getElementById('chartReg7'), {
   type: 'bar',
   data: {
     labels: [<?= implode(',', array_map(fn($d) => '"'.$d['date'].'"', $reg7days)) ?>],
-    datasets: [{
-      label: 'Registrasi',
-      data: [<?= implode(',', array_column($reg7days, 'count')) ?>],
-      backgroundColor: 'rgba(249,115,22,0.7)',
-      borderRadius: 6, borderSkipped: false
-    }]
+    datasets: [{ data: [<?= implode(',', array_column($reg7days, 'count')) ?>],
+      backgroundColor: 'rgba(249,115,22,0.75)', borderRadius: 5, borderSkipped: false }]
   },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-      x: { grid: { display: false } }
-    },
-    plugins: { legend: { display: false }, tooltip: { callbacks: {
-      label: ctx => ' ' + ctx.raw + ' pendaftaran'
-    }}}
-  }
+  options: barOpts('pendaftaran')
 });
 
 // ── Bar: Submission 7 hari ────────────────────────────────────────────────────
@@ -777,47 +716,24 @@ new Chart(document.getElementById('chartSub7'), {
   type: 'bar',
   data: {
     labels: [<?= implode(',', array_map(fn($d) => '"'.$d['date'].'"', $sub7days)) ?>],
-    datasets: [{
-      label: 'Submission',
-      data: [<?= implode(',', array_column($sub7days, 'count')) ?>],
-      backgroundColor: 'rgba(34,197,94,0.7)',
-      borderRadius: 6, borderSkipped: false
-    }]
+    datasets: [{ data: [<?= implode(',', array_column($sub7days, 'count')) ?>],
+      backgroundColor: 'rgba(34,197,94,0.75)', borderRadius: 5, borderSkipped: false }]
   },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-      x: { grid: { display: false } }
-    },
-    plugins: { legend: { display: false }, tooltip: { callbacks: {
-      label: ctx => ' ' + ctx.raw + ' submission'
-    }}}
-  }
+  options: barOpts('submission')
 });
 
 // ── Bar: Distribusi Progress ──────────────────────────────────────────────────
 new Chart(document.getElementById('chartProgress'), {
   type: 'bar',
   data: {
-    labels: ['0 – 25%', '25 – 50%', '50 – 75%', '75 – 99%', 'Finisher 🏆'],
+    labels: ['0-25%', '25-50%', '50-75%', '75-99%', 'Finish'],
     datasets: [{
-      label: 'Peserta',
       data: [<?= $progressDist['p0'] ?>,<?= $progressDist['p25'] ?>,<?= $progressDist['p50'] ?>,<?= $progressDist['p75'] ?>,<?= $progressDist['p100'] ?>],
       backgroundColor: ['#ef4444','#f59e0b','#3b82f6','#a855f7','#22c55e'],
-      borderRadius: 8, borderSkipped: false
+      borderRadius: 6, borderSkipped: false
     }]
   },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-      x: { grid: { display: false } }
-    },
-    plugins: { legend: { display: false }, tooltip: { callbacks: {
-      label: ctx => ' ' + ctx.raw + ' peserta'
-    }}}
-  }
+  options: barOpts('peserta')
 });
 
 // ── Existing helpers ──────────────────────────────────────────────────────────

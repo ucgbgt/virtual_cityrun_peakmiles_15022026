@@ -16,6 +16,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $maxDaily = max(1, min(99, (int)($_POST['max_daily_submissions'] ?? 3)));
         setSetting('max_daily_submissions', (string)$maxDaily);
         $flash = ['type' => 'success', 'msg' => 'Pengaturan submission berhasil disimpan!'];
+    } elseif (($_POST['action'] ?? '') === 'save_wa_template') {
+        $tpl = trim($_POST['wa_address_template'] ?? '');
+        if (empty($tpl)) {
+            $flash = ['type' => 'error', 'msg' => 'Template pesan WA tidak boleh kosong.'];
+        } else {
+            setSetting('wa_address_template', $tpl);
+            $flash = ['type' => 'success', 'msg' => 'Template pesan WA berhasil disimpan!'];
+        }
     } else {
         // Simpan event
         $eventId = (int)($_POST['event_id'] ?? 0);
@@ -45,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $events = $db->query("SELECT * FROM events ORDER BY id DESC")->fetchAll();
-$maxDailySetting = (int)getSetting('max_daily_submissions', '3');
+$maxDailySetting  = (int)getSetting('max_daily_submissions', '3');
+$waTemplateSetting = getSetting('wa_address_template', 'Hi Kak {nama}, silakan segera mengisi data alamat pada https://peakmiles.id/profile agar nanti admin PeakMiles dapat segera mendata pengiriman Race Pack sesuai dengan data peserta Virtual Run.');
 $csrf = generateCSRFToken();
 ?>
 <!DOCTYPE html>
@@ -107,6 +116,31 @@ $csrf = generateCSRFToken();
               </button>
             </div>
           </div>
+        </form>
+      </div>
+
+      <!-- WA Template Card -->
+      <div class="form-card mb-4">
+        <h5 style="color:#fff;font-weight:700;margin-bottom:6px;">
+          <i class="fab fa-whatsapp" style="color:#22c55e;margin-right:8px;"></i>Template Pesan WhatsApp — Pengingat Alamat
+        </h5>
+        <p style="color:var(--gray-light);font-size:13px;margin-bottom:20px;">
+          Teks ini akan dikirim ke peserta yang belum mengisi alamat. Gunakan <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px;color:var(--primary);">{nama}</code> sebagai placeholder nama peserta.
+        </p>
+        <form method="POST" action="">
+          <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+          <input type="hidden" name="action" value="save_wa_template">
+          <div class="form-group" style="margin-bottom:12px;">
+            <textarea name="wa_address_template" class="form-control-custom" rows="4" required
+                      style="font-size:13px;line-height:1.6;"><?= htmlspecialchars($waTemplateSetting) ?></textarea>
+            <div style="font-size:11px;color:var(--gray-light);margin-top:6px;">
+              <i class="fa fa-info-circle" style="color:var(--primary);margin-right:4px;"></i>
+              Gunakan <strong>{nama}</strong> untuk menyisipkan nama peserta secara otomatis.
+            </div>
+          </div>
+          <button type="submit" class="btn-primary-custom btn-sm-custom">
+            <i class="fa fa-save"></i> Simpan Template
+          </button>
         </form>
       </div>
 

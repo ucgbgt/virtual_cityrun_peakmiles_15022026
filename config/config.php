@@ -25,6 +25,9 @@ define('SESSION_TIMEOUT', 3600 * 8); // 8 hours
 // Allowed image types
 define('ALLOWED_TYPES', ['image/jpeg', 'image/png', 'image/webp']);
 
+// Waajo WhatsApp Gateway
+define('WAAJO_APIKEY', '');   // Isi dengan API key dari waajo.id
+
 // Duitku Payment Gateway
 define('DUITKU_MERCHANT_CODE', 'D20995');             // ganti dengan merchant code dari Duitku
 define('DUITKU_API_KEY',       'a6ccb034e663d5f024d71070f33b231c');

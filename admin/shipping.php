@@ -658,8 +658,13 @@ $exportUrl = '?' . http_build_query(array_filter([
                 </td>
                 <td>
                   <button onclick="openUpdateModal(<?= $row['user_id'] ?>,<?= $row['event_id'] ?>,'<?= $row['shipping_status'] ?>','<?= addslashes($row['courier'] ?? '') ?>','<?= addslashes($row['tracking_number'] ?? '') ?>')"
-                          class="action-btn action-btn-edit" style="width:100%;justify-content:center;">
+                          class="action-btn action-btn-edit" style="width:100%;justify-content:center;margin-bottom:5px;">
                     <i class="fa fa-edit"></i> Update
+                  </button>
+                  <button onclick="sendWaSingle(<?= $row['user_id'] ?>, '<?= addslashes($row['name']) ?>')"
+                          class="action-btn" style="width:100%;justify-content:center;background:rgba(34,197,94,0.12);color:#22c55e;border-color:rgba(34,197,94,0.25);"
+                          title="Kirim WA pengingat alamat">
+                    <i class="fab fa-whatsapp"></i> WA
                   </button>
                 </td>
               </tr>
@@ -713,6 +718,9 @@ $exportUrl = '?' . http_build_query(array_filter([
     </button>
     <button onclick="openBulkModal('delivered')" class="bulk-btn bulk-btn-delivered">
       <i class="fa fa-check-circle"></i> Terkirim
+    </button>
+    <button onclick="sendWaBulk()" class="bulk-btn" style="background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);">
+      <i class="fab fa-whatsapp"></i> Kirim WA
     </button>
   </div>
   <button onclick="clearSelection()" class="bulk-btn bulk-btn-cancel" style="margin-left:auto;">
@@ -851,6 +859,43 @@ $exportUrl = '?' . http_build_query(array_filter([
   </div>
 </div>
 
+<!-- ══════ MODAL: Konfirmasi Kirim WA ══════ -->
+<div class="modal-overlay" id="waConfirmModal">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <button class="modal-close" onclick="closeModal('waConfirmModal')">&times;</button>
+    <div style="width:56px;height:56px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <i class="fab fa-whatsapp" style="font-size:26px;color:#22c55e;"></i>
+    </div>
+    <h3 style="font-family:'Saira',sans-serif;font-weight:800;color:#fff;margin-bottom:8px;">Kirim WhatsApp</h3>
+    <p id="waConfirmDesc" style="color:var(--gray-light);font-size:14px;margin-bottom:20px;"></p>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:20px;text-align:left;">
+      <div style="font-size:11px;font-weight:700;color:var(--gray-light);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Preview Pesan</div>
+      <div id="waPreviewText" style="font-size:13px;color:#e5e7eb;line-height:1.6;white-space:pre-wrap;"></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeModal('waConfirmModal')" class="btn-outline-custom" style="flex:1;justify-content:center;padding:12px;">Batal</button>
+      <button onclick="doSendWa()" id="waSendBtn" class="btn-primary-custom" style="flex:1;justify-content:center;padding:12px;background:#22c55e;border-color:#22c55e;">
+        <i class="fab fa-whatsapp"></i> Kirim Sekarang
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Hasil Kirim WA ══════ -->
+<div class="modal-overlay" id="waResultModal">
+  <div class="modal-box" style="max-width:420px;text-align:center;">
+    <button class="modal-close" onclick="closeModal('waResultModal')">&times;</button>
+    <div id="waResultIcon" style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"></div>
+    <h3 id="waResultTitle" style="font-family:'Saira',sans-serif;font-weight:800;color:#fff;margin-bottom:8px;"></h3>
+    <p id="waResultDesc" style="color:var(--gray-light);font-size:14px;margin-bottom:16px;"></p>
+    <div id="waResultErrors" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px;text-align:left;margin-bottom:16px;max-height:160px;overflow-y:auto;">
+      <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:6px;text-transform:uppercase;">Detail Gagal</div>
+      <ul id="waErrorList" style="font-size:12px;color:#fca5a5;margin:0;padding-left:16px;line-height:1.8;"></ul>
+    </div>
+    <button onclick="closeModal('waResultModal')" class="btn-primary-custom" style="width:100%;justify-content:center;padding:12px;">Tutup</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
@@ -936,6 +981,90 @@ document.getElementById('importForm').addEventListener('submit', () => {
   document.getElementById('importBtn').innerHTML = '<i class="fa fa-spinner fa-spin"></i> Memproses...';
   document.getElementById('importBtn').disabled = true;
 });
+
+// ── WhatsApp ───────────────────────────────────────────────────────────────
+const waTemplate = <?= json_encode(getSetting('wa_address_template', 'Hi Kak {nama}, silakan segera mengisi data alamat pada https://peakmiles.id/profile agar nanti admin PeakMiles dapat segera mendata pengiriman Race Pack sesuai dengan data peserta Virtual Run.')) ?>;
+
+let waPendingIds  = [];
+let waPendingName = '';
+
+function sendWaSingle(userId, name) {
+  waPendingIds  = [userId];
+  waPendingName = name;
+  const preview = waTemplate.replace('{nama}', name);
+  document.getElementById('waConfirmDesc').textContent  = 'Kirim pesan WA ke ' + name + '.';
+  document.getElementById('waPreviewText').textContent  = preview;
+  openModal('waConfirmModal');
+}
+
+function sendWaBulk() {
+  const sel = getSelected();
+  if (sel.length === 0) { alert('Pilih minimal 1 peserta.'); return; }
+  waPendingIds  = sel.map(Number);
+  waPendingName = '';
+  const preview = waTemplate.replace('{nama}', '[nama peserta]');
+  document.getElementById('waConfirmDesc').textContent  = 'Kirim pesan WA ke ' + sel.length + ' peserta yang dipilih.';
+  document.getElementById('waPreviewText').textContent  = preview;
+  openModal('waConfirmModal');
+}
+
+function doSendWa() {
+  const btn = document.getElementById('waSendBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Mengirim...';
+
+  fetch('<?= SITE_URL ?>/api/send-wa.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_ids: waPendingIds }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    closeModal('waConfirmModal');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fab fa-whatsapp"></i> Kirim Sekarang';
+
+    // Tampilkan modal hasil
+    const icon  = document.getElementById('waResultIcon');
+    const title = document.getElementById('waResultTitle');
+    const desc  = document.getElementById('waResultDesc');
+    const errBox = document.getElementById('waResultErrors');
+    const errList = document.getElementById('waErrorList');
+
+    if (data.success) {
+      icon.style.background = 'rgba(34,197,94,0.15)';
+      icon.innerHTML = '<i class="fab fa-whatsapp" style="font-size:26px;color:#22c55e;"></i>';
+      title.textContent = 'Berhasil Dikirim!';
+      desc.textContent  = data.sent + ' pesan WA berhasil dikirim' + (data.failed > 0 ? ', ' + data.failed + ' gagal.' : '.');
+    } else {
+      icon.style.background = 'rgba(239,68,68,0.15)';
+      icon.innerHTML = '<i class="fa fa-times-circle" style="font-size:26px;color:#ef4444;"></i>';
+      title.textContent = 'Pengiriman Gagal';
+      desc.textContent  = data.message || ('0 dari ' + waPendingIds.length + ' pesan terkirim.');
+    }
+
+    if (data.errors && data.errors.length > 0) {
+      errBox.style.display = 'block';
+      errList.innerHTML = data.errors.map(e => '<li>' + e + '</li>').join('');
+    } else {
+      errBox.style.display = 'none';
+    }
+
+    openModal('waResultModal');
+  })
+  .catch(() => {
+    closeModal('waConfirmModal');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fab fa-whatsapp"></i> Kirim Sekarang';
+
+    document.getElementById('waResultIcon').style.background = 'rgba(239,68,68,0.15)';
+    document.getElementById('waResultIcon').innerHTML = '<i class="fa fa-times-circle" style="font-size:26px;color:#ef4444;"></i>';
+    document.getElementById('waResultTitle').textContent = 'Kesalahan Jaringan';
+    document.getElementById('waResultDesc').textContent  = 'Gagal menghubungi server. Coba lagi.';
+    document.getElementById('waResultErrors').style.display = 'none';
+    openModal('waResultModal');
+  });
+}
 
 // ── Copy tracking ──────────────────────────────────────────────────────────
 function copyText(text) {

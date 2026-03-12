@@ -151,7 +151,7 @@ $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 25;
 $offset  = ($page - 1) * $perPage;
 
-$where  = ['1=1'];
+$where  = ['(r.payment_status = \'paid\' OR r.admin_activated = 1)'];
 $params = [];
 if ($event)          { $where[] = 'r.event_id = ?';                     $params[] = $event['id']; }
 if ($search)         { $where[] = '(u.name LIKE ? OR u.email LIKE ?)';  $params[] = "%$search%"; $params[] = "%$search%"; }
@@ -212,7 +212,7 @@ if ($event) {
         FROM registrations r
         JOIN users u ON r.user_id = u.id
         LEFT JOIN shipping s ON s.user_id = r.user_id AND s.event_id = r.event_id
-        WHERE r.event_id = ?
+        WHERE r.event_id = ? AND (r.payment_status = 'paid' OR r.admin_activated = 1)
         GROUP BY COALESCE(s.status,'not_ready')
     ");
     $kpiStmt->execute([$event['id']]);
@@ -222,7 +222,8 @@ if ($event) {
         SELECT COUNT(*) FROM registrations r
         JOIN users u ON r.user_id = u.id
         LEFT JOIN user_profiles p ON p.user_id = u.id
-        WHERE r.event_id = ? AND (p.address_full IS NULL OR p.address_full = '')
+        WHERE r.event_id = ? AND (r.payment_status = 'paid' OR r.admin_activated = 1)
+          AND (p.address_full IS NULL OR p.address_full = '')
     ");
     $naStmt->execute([$event['id']]);
     $kpi['no_address'] = (int)$naStmt->fetchColumn();
@@ -241,7 +242,7 @@ if ($event) {
         SELECT COALESCE(UPPER(TRIM(p.jersey_size)),'') AS sz, COUNT(*) AS c
         FROM registrations r
         LEFT JOIN user_profiles p ON p.user_id = r.user_id
-        WHERE r.event_id = ?
+        WHERE r.event_id = ? AND (r.payment_status = 'paid' OR r.admin_activated = 1)
         GROUP BY COALESCE(UPPER(TRIM(p.jersey_size)),'')
     ");
     $jStmt->execute([$event['id']]);

@@ -367,6 +367,7 @@ document.querySelectorAll('.cat-radio').forEach(function(radio) {
 });
 
 let selectedPaymentMethod = '';
+let isPaymentProcessing = false;
 
 // Render grouped payment methods
 function renderGroupedMethods(groups, containerEl, radioName, selectFn) {
@@ -437,7 +438,8 @@ function selectMethod(code, el) {
 }
 
 function bayarSekarang() {
-  if (!selectedPaymentMethod) return;
+  if (!selectedPaymentMethod || isPaymentProcessing) return;
+  isPaymentProcessing = true;
   document.getElementById('paymentMethods').style.display = 'none';
   document.getElementById('paymentButtons').style.display = 'none';
   document.getElementById('paymentLoading').style.display = 'block';
@@ -454,6 +456,7 @@ function bayarSekarang() {
     if (data.success && data.paymentUrl) {
       window.location.href = data.paymentUrl;
     } else {
+      isPaymentProcessing = false;
       document.getElementById('paymentLoading').style.display = 'none';
       document.getElementById('paymentMethods').style.display = 'block';
       document.getElementById('paymentButtons').style.display = 'flex';
@@ -463,6 +466,7 @@ function bayarSekarang() {
     }
   })
   .catch(() => {
+    isPaymentProcessing = false;
     document.getElementById('paymentLoading').style.display = 'none';
     document.getElementById('paymentMethods').style.display = 'block';
     document.getElementById('paymentButtons').style.display = 'flex';

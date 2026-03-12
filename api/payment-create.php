@@ -109,9 +109,25 @@ if ($httpCode === 200) {
     $result = json_decode($response, true);
 
     if (isset($result['paymentUrl'])) {
-        // Simpan merchant_order_id dan reference ke database
+        // Simpan merchant_order_id dan reference ke registrations (untuk referensi cepat)
         $db->prepare("UPDATE registrations SET merchant_order_id=?, payment_reference=? WHERE user_id=? AND event_id=?")
            ->execute([$merchantOrderId, $result['reference'] ?? '', $user['id'], $event['id']]);
+
+        // Simpan ke tabel payment_invoices agar semua invoice tersimpan sebagai history.
+        // Ini mencegah invoice lama yang sudah dibayar user tidak bisa dikenali callback
+        // karena merchant_order_id di registrations sudah ditimpa invoice baru.
+        $db->prepare("
+            INSERT IGNORE INTO payment_invoices
+                (registration_id, user_id, event_id, merchant_order_id, payment_method, amount)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ")->execute([
+            $registration['id'],
+            $user['id'],
+            $event['id'],
+            $merchantOrderId,
+            $selectedMethod,
+            $amount,
+        ]);
 
         logAudit($user['id'], 'payment_initiated', 'registrations', $registration['id'], null, [
             'merchant_order_id' => $merchantOrderId,

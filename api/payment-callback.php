@@ -46,17 +46,37 @@ if (!hash_equals($calcSignature, $signature)) {
 }
 
 // 4. Ambil data registrasi dari DB dan verifikasi amount
+// Lookup lewat payment_invoices dulu agar semua invoice (termasuk yang sudah
+// ditimpa di registrations) tetap bisa dikenali ketika callback masuk.
 $db = getDB();
 $stmt = $db->prepare("
     SELECT r.id, r.user_id, r.category, r.payment_status,
-           e.fee_10k, e.fee_21k
-    FROM registrations r
-    JOIN events e ON r.event_id = e.id
-    WHERE r.merchant_order_id = ?
+           e.fee_10k, e.fee_21k,
+           pi.id AS invoice_id
+    FROM payment_invoices pi
+    JOIN registrations r ON r.id = pi.registration_id
+    JOIN events        e ON e.id = r.event_id
+    WHERE pi.merchant_order_id = ?
     LIMIT 1
 ");
 $stmt->execute([$merchantOrderId]);
 $regData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$regData) {
+    // Fallback: coba cari di kolom merchant_order_id pada registrations
+    // (untuk invoice lama sebelum tabel payment_invoices dibuat)
+    $stmt = $db->prepare("
+        SELECT r.id, r.user_id, r.category, r.payment_status,
+               e.fee_10k, e.fee_21k,
+               NULL AS invoice_id
+        FROM registrations r
+        JOIN events e ON r.event_id = e.id
+        WHERE r.merchant_order_id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$merchantOrderId]);
+    $regData = $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
 if (!$regData) {
     // Order tidak ditemukan di database kita
@@ -91,6 +111,14 @@ if ($resultCode === '00') {
         WHERE id = ? AND payment_status != 'paid'
     ");
     $upd->execute([$reference, $regData['id']]);
+
+    // Update status di payment_invoices
+    if (!empty($regData['invoice_id'])) {
+        $db->prepare("
+            UPDATE payment_invoices SET status='paid', payment_reference=?
+            WHERE id=?
+        ")->execute([$reference, $regData['invoice_id']]);
+    }
 
     logAudit($regData['user_id'], 'payment_success', 'registrations', $regData['id'], null, [
         'merchant_order_id' => $merchantOrderId,

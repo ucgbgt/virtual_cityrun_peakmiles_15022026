@@ -591,6 +591,7 @@ $csrf = generateCSRFToken();
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
 let dashSelectedMethod = '';
+let isPaymentProcessing = false;
 
 function renderGroupedMethods(groups, containerEl, radioName, selectFn) {
   const catIconMap = {
@@ -658,7 +659,8 @@ function selectDashMethod(code, el) {
 }
 
 function doPayment() {
-  if (!dashSelectedMethod) return;
+  if (!dashSelectedMethod || isPaymentProcessing) return;
+  isPaymentProcessing = true;
   document.getElementById('dashPayMethods').style.display = 'none';
   document.getElementById('dashPayButtons').style.display = 'none';
   document.getElementById('dashPayLoading').style.display = 'block';
@@ -675,6 +677,7 @@ function doPayment() {
     if (data.success && data.paymentUrl) {
       window.location.href = data.paymentUrl;
     } else {
+      isPaymentProcessing = false;
       document.getElementById('dashPayLoading').style.display = 'none';
       document.getElementById('dashPayMethods').style.display = 'block';
       document.getElementById('dashPayButtons').style.display = 'block';
@@ -684,6 +687,7 @@ function doPayment() {
     }
   })
   .catch(() => {
+    isPaymentProcessing = false;
     document.getElementById('dashPayLoading').style.display = 'none';
     document.getElementById('dashPayMethods').style.display = 'block';
     document.getElementById('dashPayButtons').style.display = 'block';
@@ -797,7 +801,8 @@ function selectJoinMethod(code, el) {
 }
 
 function joinBayarSekarang() {
-  if (!joinSelectedPayMethod) return;
+  if (!joinSelectedPayMethod || isPaymentProcessing) return;
+  isPaymentProcessing = true;
   document.getElementById('joinPayMethods').style.display = 'none';
   document.getElementById('joinPayButtons').style.display = 'none';
   document.getElementById('joinPayError').style.display   = 'none';
@@ -816,6 +821,7 @@ function joinBayarSekarang() {
     if (data.success && data.paymentUrl) {
       window.location.href = data.paymentUrl;
     } else {
+      isPaymentProcessing = false;
       document.getElementById('joinPayLoading').style.display = 'none';
       document.getElementById('joinPayMethods').style.display = 'block';
       document.getElementById('joinPayButtons').style.display = 'flex';
@@ -825,6 +831,7 @@ function joinBayarSekarang() {
     }
   })
   .catch(function() {
+    isPaymentProcessing = false;
     document.getElementById('joinPayLoading').style.display = 'none';
     document.getElementById('joinPayMethods').style.display = 'block';
     document.getElementById('joinPayButtons').style.display = 'flex';

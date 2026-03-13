@@ -4,6 +4,25 @@ $activeNav = 'dashboard';
 require_once __DIR__ . '/includes/functions.php';
 requireLogin();
 
+// AJAX: simpan nomor HP
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_phone') {
+    header('Content-Type: application/json');
+    if (!validateCSRF($_POST['csrf_token'] ?? '')) {
+        echo json_encode(['success' => false, 'message' => 'Token tidak valid.']);
+        exit;
+    }
+    $phone = trim($_POST['phone'] ?? '');
+    if (!preg_match('/^[0-9+\-\s]{8,20}$/', $phone)) {
+        echo json_encode(['success' => false, 'message' => 'Nomor HP tidak valid. Masukkan 8-20 digit angka.']);
+        exit;
+    }
+    $db = getDB();
+    $uid = $_SESSION['user_id'] ?? 0;
+    $db->prepare("UPDATE users SET phone=?, updated_at=NOW() WHERE id=?")->execute([$phone, $uid]);
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 $user = getCurrentUser();
 $event = getActiveEvent();
 $registration = $event ? getUserRegistration($user['id'], $event['id']) : null;
@@ -897,7 +916,256 @@ document.addEventListener('DOMContentLoaded', function() {
   <?php if ($event && !$registration): ?>
   openModal('joinEventModal');
   <?php endif; ?>
+
+  // Auto-open phone modal jika nomor HP belum diisi
+  <?php if (empty($user['phone'])): ?>
+  openModal('phoneRequiredModal');
+  <?php endif; ?>
+
+  // Form simpan nomor HP
+  document.getElementById('phoneRequiredForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const btn = form.querySelector('button[type="submit"]');
+    const errEl = document.getElementById('phoneRequiredError');
+    const origHTML = btn.innerHTML;
+
+    errEl.style.display = 'none';
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Menyimpan...';
+    btn.disabled = true;
+
+    fetch('', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: new FormData(form)
+    })
+    .then(r => r.json())
+    .then(function(data) {
+      if (data.success) {
+        closeModal('phoneRequiredModal');
+        document.body.style.overflow = '';
+      } else {
+        errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + data.message;
+        errEl.style.display = 'flex';
+        btn.innerHTML = origHTML;
+        btn.disabled = false;
+      }
+    })
+    .catch(function() {
+      errEl.innerHTML = '<i class="fa fa-exclamation-circle"></i> Terjadi kesalahan jaringan. Coba lagi.';
+      errEl.style.display = 'flex';
+      btn.innerHTML = origHTML;
+      btn.disabled = false;
+    });
+  });
 });
 </script>
+
+<!-- Modal: Wajib Isi Nomor HP -->
+<style>
+#phoneRequiredModal .phn-modal-box {
+  background: var(--dark-2, #1a1a2e);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  padding: 40px 36px 36px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  animation: modal-in 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+#phoneRequiredModal .phn-modal-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary, #f97316), #fb923c, #fdba74);
+  border-radius: 20px 20px 0 0;
+}
+#phoneRequiredModal .phn-icon-wrap {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, rgba(249,115,22,0.18), rgba(249,115,22,0.06));
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+#phoneRequiredModal .phn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--primary, #f97316);
+  background: rgba(249,115,22,0.1);
+  border: 1px solid rgba(249,115,22,0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  margin-bottom: 12px;
+}
+#phoneRequiredModal h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 10px;
+  line-height: 1.2;
+}
+#phoneRequiredModal .phn-desc {
+  font-size: 13.5px;
+  color: var(--gray-light, #94a3b8);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+#phoneRequiredModal .phn-input-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+#phoneRequiredModal .phn-input-wrap .phn-prefix {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary, #f97316);
+  font-size: 15px;
+  pointer-events: none;
+}
+#phoneRequiredModal .phn-input-wrap input[type="tel"] {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 14px 14px 14px 42px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.5px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-family: inherit;
+}
+#phoneRequiredModal .phn-input-wrap input[type="tel"]::placeholder {
+  color: rgba(255,255,255,0.25);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+#phoneRequiredModal .phn-input-wrap input[type="tel"]:focus {
+  border-color: var(--primary, #f97316);
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+  background: rgba(249,115,22,0.04);
+}
+#phoneRequiredModal .phn-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+#phoneRequiredModal #phoneRequiredError {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  color: #f87171;
+  font-size: 13px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+#phoneRequiredModal .phn-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary, #f97316), #ea6a0a);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s, transform 0.15s;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+#phoneRequiredModal .phn-submit-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+#phoneRequiredModal .phn-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+#phoneRequiredModal .phn-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+@media (max-width: 480px) {
+  #phoneRequiredModal .phn-modal-box {
+    padding: 32px 22px 28px;
+    border-radius: 16px;
+    margin: 0 12px;
+  }
+  #phoneRequiredModal h3 { font-size: 19px; }
+}
+</style>
+
+<div class="modal-overlay" id="phoneRequiredModal">
+  <div class="phn-modal-box">
+    <div style="text-align:center;">
+      <div class="phn-icon-wrap">
+        <i class="fa fa-mobile-alt" style="font-size:30px;color:var(--primary,#f97316);"></i>
+      </div>
+      <div class="phn-badge">
+        <i class="fa fa-shield-alt" style="font-size:9px;"></i> Diperlukan
+      </div>
+      <h3>Lengkapi Nomor HP</h3>
+      <p class="phn-desc">Nomor HP diperlukan untuk validasi peserta dan pengiriman racepack.</p>
+    </div>
+
+    <form id="phoneRequiredForm" method="POST" action="">
+      <input type="hidden" name="action" value="save_phone">
+      <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+
+      <label class="phn-label">Nomor HP / WhatsApp</label>
+      <div class="phn-input-wrap">
+        <span class="phn-prefix"><i class="fa fa-phone" style="font-size:13px;"></i></span>
+        <input type="tel" name="phone"
+               placeholder="08123456789"
+               pattern="[0-9+\-\s]{8,20}"
+               maxlength="20"
+               autocomplete="tel"
+               required>
+      </div>
+
+      <div id="phoneRequiredError"></div>
+
+      <button type="submit" class="phn-submit-btn">
+        <i class="fa fa-check-circle"></i> Simpan & Lanjutkan
+      </button>
+
+      <p class="phn-hint">
+        <i class="fa fa-lock" style="font-size:10px;"></i>
+        Data kamu bersifat rahasia
+      </p>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>

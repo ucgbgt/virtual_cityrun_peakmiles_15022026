@@ -3,40 +3,48 @@ require_once __DIR__ . '/../includes/functions.php';
 startSession();
 requireAdmin();
 
+$isAjax = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+
+function respond(bool $ok, string $msg, array $extra = [], string $redirect = ''): void {
+    global $isAjax;
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(array_merge(['success' => $ok, 'message' => $msg], $extra));
+        exit;
+    }
+    if ($ok) flash('success', $msg); else flash('error', $msg);
+    redirect($redirect ?: SITE_URL . '/admin/submissions.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect(SITE_URL . '/admin/submissions');
+    respond(false, 'Method not allowed.');
 }
 
 if (!validateCSRF($_POST['csrf_token'] ?? '')) {
-    flash('error', 'Token tidak valid.');
-    redirect(SITE_URL . '/admin/submissions');
+    respond(false, 'Token tidak valid. Silakan refresh halaman.');
 }
 
-$adminUser = getCurrentUser();
-$db = getDB();
+$adminUser    = getCurrentUser();
+$db           = getDB();
 $submissionId = (int)($_POST['submission_id'] ?? 0);
-$action = $_POST['action'] ?? '';
-$adminNote = trim($_POST['admin_note'] ?? '');
-$redirectUrl = $_POST['redirect'] ?? SITE_URL . '/admin/submissions.php';
+$action       = $_POST['action'] ?? '';
+$adminNote    = trim($_POST['admin_note'] ?? '');
+$redirectUrl  = $_POST['redirect'] ?? SITE_URL . '/admin/submissions.php';
 
 if (!in_array($action, ['approve', 'reject'])) {
-    flash('error', 'Aksi tidak valid.');
-    redirect($redirectUrl);
+    respond(false, 'Aksi tidak valid.', [], $redirectUrl);
 }
 
 if ($action === 'reject' && empty($adminNote)) {
-    flash('error', 'Alasan penolakan wajib diisi.');
-    redirect($redirectUrl);
+    respond(false, 'Alasan penolakan wajib diisi.', [], $redirectUrl);
 }
 
-// Get submission
 $stmt = $db->prepare("SELECT * FROM run_submissions WHERE id=? AND status='pending'");
 $stmt->execute([$submissionId]);
 $sub = $stmt->fetch();
 
 if (!$sub) {
-    flash('error', 'Submission tidak ditemukan atau sudah diproses.');
-    redirect($redirectUrl);
+    respond(false, 'Submission tidak ditemukan atau sudah diproses.', [], $redirectUrl);
 }
 
 // Handle distance edit
@@ -53,18 +61,20 @@ $before = ['status' => $sub['status'], 'distance_km' => $sub['distance_km']];
 if ($action === 'approve') {
     $db->prepare("UPDATE run_submissions SET status='approved', distance_km=?, admin_note=?, reviewed_by=?, reviewed_at=NOW() WHERE id=?")
        ->execute([$distanceKm, $adminNote ?: null, $adminUser['id'], $submissionId]);
-    
-    // Update registration total km and check finisher
     checkAndUpdateFinisher($sub['user_id'], $sub['event_id']);
-    
-    flash('success', 'Submission berhasil disetujui.');
+    $msg = 'Submission berhasil disetujui.';
 } else {
     $db->prepare("UPDATE run_submissions SET status='rejected', admin_note=?, reviewed_by=?, reviewed_at=NOW() WHERE id=?")
        ->execute([$adminNote, $adminUser['id'], $submissionId]);
-    flash('success', 'Submission ditolak.');
+    $msg = 'Submission ditolak.';
 }
 
 $after = ['status' => $action === 'approve' ? 'approved' : 'rejected', 'distance_km' => $distanceKm];
 logAudit($adminUser['id'], $action . '_submission', 'run_submissions', $submissionId, $before, $after);
 
-redirect($redirectUrl);
+respond(true, $msg, [
+    'action'      => $action,
+    'distance_km' => $distanceKm,
+    'admin_name'  => $adminUser['name'],
+    'admin_note'  => $adminNote,
+], $redirectUrl);

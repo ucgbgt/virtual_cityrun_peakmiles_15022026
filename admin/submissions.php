@@ -211,6 +211,7 @@ $csrf = generateCSRFToken();
                 <td>
                   <img src="<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>" alt="Bukti"
                        class="evidence-thumb"
+                       loading="lazy"
                        onerror="this.style.opacity='0.3';this.title='File tidak ditemukan';"
                        onclick="openLightbox('<?= UPLOAD_URL . sanitize($sub['evidence_path']) ?>')">
                 </td>
@@ -379,6 +380,9 @@ $csrf = generateCSRFToken();
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 <script>
+const CSRF = '<?= $csrf ?>';
+const API  = '<?= SITE_URL ?>/api/review-submission.php';
+
 // ═══════════════════════════════════════════════
 //  State
 // ═══════════════════════════════════════════════
@@ -390,29 +394,19 @@ let selectedIds = new Set();
 function onRowCheck(cb) {
   const id  = parseInt(cb.value);
   const row = document.getElementById('row-' + id);
-  if (cb.checked) {
-    selectedIds.add(id);
-    row.classList.add('row-checked');
-  } else {
-    selectedIds.delete(id);
-    row.classList.remove('row-checked');
-  }
+  if (cb.checked) { selectedIds.add(id); row.classList.add('row-checked'); }
+  else            { selectedIds.delete(id); row.classList.remove('row-checked'); }
   syncUI();
 }
 
 function toggleSelectAll(checked) {
-  // Sinkronkan kedua checkbox "select all"
   document.querySelectorAll('#selectAllHeader, #selectAllTh').forEach(el => el.checked = checked);
-
-  document.querySelectorAll('.row-cb').forEach(cb => {
-    cb.checked = checked;
-    onRowCheck(cb);
-  });
+  document.querySelectorAll('.row-cb').forEach(cb => { cb.checked = checked; onRowCheck(cb); });
 }
 
 function clearSelection() {
   selectedIds.clear();
-  document.querySelectorAll('.row-cb').forEach(cb => { cb.checked = false; });
+  document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
   document.querySelectorAll('#selectAllHeader, #selectAllTh').forEach(el => el.checked = false);
   document.querySelectorAll('.pending-row').forEach(row => row.classList.remove('row-checked'));
   syncUI();
@@ -421,12 +415,10 @@ function clearSelection() {
 function syncUI() {
   const count   = selectedIds.size;
   const bulkBar = document.getElementById('bulkBar');
-
   document.getElementById('bulkCount').textContent = count;
   if (count > 0) { bulkBar.style.display = 'flex'; bulkBar.classList.add('visible'); }
-  else { bulkBar.style.display = 'none'; bulkBar.classList.remove('visible'); }
+  else           { bulkBar.style.display = 'none';  bulkBar.classList.remove('visible'); }
 
-  // Sinkron state checkbox header
   const allCbs   = document.querySelectorAll('.row-cb');
   const allCheck = allCbs.length > 0 && [...allCbs].every(c => c.checked);
   document.querySelectorAll('#selectAllHeader, #selectAllTh').forEach(el => {
@@ -436,32 +428,120 @@ function syncUI() {
 }
 
 // ═══════════════════════════════════════════════
-//  Approve satu item (individual)
+//  Update baris di tabel setelah approve/reject
 // ═══════════════════════════════════════════════
-function approveOne(id) {
-  const km = document.getElementById('km-' + id)?.value ?? null;
-  if (!confirm('Setujui submission ini?')) return;
-  const f = document.createElement('form');
-  f.method = 'POST';
-  f.action = '<?= SITE_URL ?>/api/review-submission.php';
-  f.innerHTML = `
-    <input name="csrf_token" value="<?= $csrf ?>">
-    <input name="submission_id" value="${id}">
-    <input name="action" value="approve">
-    <input name="redirect" value="<?= SITE_URL ?>/admin/submissions.php?status=<?= urlencode($filterStatus) ?>&search=<?= urlencode($search) ?>&page=<?= $page ?>">
-    ${km ? '<input name="distance_km" value="' + km + '">' : ''}
-  `;
-  document.body.appendChild(f);
-  f.submit();
+function applyRowResult(id, action, adminNote, adminName, distanceKm) {
+  const row = document.getElementById('row-' + id);
+  if (!row) return;
+
+  row.classList.remove('pending-row', 'row-checked');
+
+  // Badge status
+  const badge = row.querySelector('.status-badge');
+  if (badge) {
+    badge.className = 'status-badge badge-' + action + 'd';
+    badge.textContent = action === 'approve' ? 'Approved' : 'Rejected';
+  }
+
+  // Kolom jarak: hapus input edit km
+  const kmInput = document.getElementById('km-' + id);
+  if (kmInput && distanceKm) {
+    row.querySelector('td:nth-child(3) div')?.setAttribute('data-km', distanceKm);
+    kmInput.remove();
+  }
+
+  // Kolom admin note
+  const noteCell = row.querySelector('td:nth-child(9)');
+  if (noteCell) noteCell.textContent = adminNote || '-';
+
+  // Kolom reviewer
+  const reviewerCell = row.querySelector('td:nth-child(10)');
+  if (reviewerCell) reviewerCell.textContent = adminName || '-';
+
+  // Kolom aksi: ganti tombol dengan timestamp
+  const aksiCell = row.querySelector('td:last-child');
+  if (aksiCell) aksiCell.innerHTML = '<span style="color:var(--gray-light);font-size:11px;">Baru saja</span>';
+
+  // Kolom checkbox: ganti dengan placeholder
+  const cbCell = row.querySelector('.td-cb');
+  if (cbCell) cbCell.innerHTML = '<span style="display:block;width:17px;height:17px;border-radius:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border);margin:0 auto;"></span>';
+
+  selectedIds.delete(id);
+  syncUI();
 }
 
 // ═══════════════════════════════════════════════
-//  Reject satu item (individual)
+//  Approve satu item via AJAX (tanpa reload)
+// ═══════════════════════════════════════════════
+async function approveOne(id) {
+  if (!confirm('Setujui submission ini?')) return;
+
+  const btn = document.querySelector('#row-' + id + ' .action-btn-approve');
+  if (btn) { btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>'; btn.disabled = true; }
+
+  const fd = new FormData();
+  fd.append('csrf_token',   CSRF);
+  fd.append('submission_id', id);
+  fd.append('action',       'approve');
+  const km = document.getElementById('km-' + id)?.value;
+  if (km) fd.append('distance_km', km);
+
+  try {
+    const res  = await fetch(API, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+    const data = await res.json();
+    if (data.success) {
+      applyRowResult(id, 'approve', data.admin_note, data.admin_name, data.distance_km);
+    } else {
+      alert(data.message || 'Terjadi kesalahan.');
+      if (btn) { btn.innerHTML = '<i class="fa fa-check"></i>'; btn.disabled = false; }
+    }
+  } catch {
+    alert('Terjadi kesalahan jaringan. Coba lagi.');
+    if (btn) { btn.innerHTML = '<i class="fa fa-check"></i>'; btn.disabled = false; }
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Reject satu item via AJAX
 // ═══════════════════════════════════════════════
 function showRejectModal(id) {
   document.getElementById('rejectSubId').value = id;
+  document.getElementById('rejectForm').querySelector('textarea[name="admin_note"]').value = '';
   openModal('rejectModal');
 }
+
+document.getElementById('rejectForm')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn      = this.querySelector('button[type="submit"]');
+  const origHTML = btn.innerHTML;
+  const note     = this.querySelector('textarea[name="admin_note"]').value.trim();
+  const subId    = parseInt(document.getElementById('rejectSubId').value);
+
+  if (!note) { alert('Alasan penolakan wajib diisi.'); return; }
+
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Menolak...';
+  btn.disabled  = true;
+
+  const fd = new FormData(this);
+
+  try {
+    const res  = await fetch(API, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+    const data = await res.json();
+    if (data.success) {
+      closeModal('rejectModal');
+      this.reset();
+      applyRowResult(subId, 'reject', note, data.admin_name, null);
+    } else {
+      alert(data.message || 'Terjadi kesalahan.');
+      btn.innerHTML = origHTML;
+      btn.disabled  = false;
+    }
+  } catch {
+    alert('Terjadi kesalahan jaringan. Coba lagi.');
+    btn.innerHTML = origHTML;
+    btn.disabled  = false;
+  }
+});
 
 // ═══════════════════════════════════════════════
 //  Bulk Approve → buka modal konfirmasi
@@ -470,20 +550,16 @@ function bulkApprove() {
   if (selectedIds.size === 0) return;
   const n = selectedIds.size;
 
-  // Tulis deskripsi
   document.getElementById('bulkApproveDesc').innerHTML =
     `Kamu akan menyetujui <strong style="color:var(--primary);">${n} submission</strong> sekaligus.<br>
      KM akan ditambahkan ke progres masing-masing peserta.`;
   document.getElementById('bulkApproveBtnLabel').textContent = `Ya, Approve ${n} Submission`;
 
-  // Isi hidden inputs IDs
   const container = document.getElementById('bulkIdsApprove');
   container.innerHTML = '';
   selectedIds.forEach(id => {
-    const inp    = document.createElement('input');
-    inp.type     = 'hidden';
-    inp.name     = 'ids[]';
-    inp.value    = id;
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'ids[]'; inp.value = id;
     container.appendChild(inp);
   });
 
@@ -493,9 +569,6 @@ function bulkApprove() {
 // ═══════════════════════════════════════════════
 //  Bulk Reject → buka modal alasan
 // ═══════════════════════════════════════════════
-document.querySelector('#bulkBar button[onclick="openModal(\'bulkRejectModal\')"]')
-  ?.addEventListener('click', prepareBulkReject);
-
 function prepareBulkReject() {
   if (selectedIds.size === 0) return;
   const n = selectedIds.size;
@@ -503,31 +576,23 @@ function prepareBulkReject() {
   document.getElementById('bulkRejectDesc').textContent = `${n} submission akan ditolak.`;
   document.getElementById('bulkRejectBtnLabel').textContent = `Tolak ${n} Submission`;
 
-  // Isi hidden inputs IDs
   const container = document.getElementById('bulkIdsReject');
   container.innerHTML = '';
   selectedIds.forEach(id => {
-    const inp    = document.createElement('input');
-    inp.type     = 'hidden';
-    inp.name     = 'ids[]';
-    inp.value    = id;
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'ids[]'; inp.value = id;
     container.appendChild(inp);
   });
 }
 
-// Pastikan IDs juga terisi saat modal dibuka lewat onclick di HTML
-document.getElementById('bulkRejectModal').addEventListener('click', function(e) {
-  if (e.target === this) return; // klik overlay → tutup
-});
-
-// Override openModal untuk bulk reject agar isi IDs dulu
+// Override openModal agar bulk reject isi IDs lebih dulu
 const _origOpenModal = window.openModal;
 window.openModal = function(id) {
   if (id === 'bulkRejectModal') prepareBulkReject();
   _origOpenModal(id);
 };
 
-// Loading state saat submit bulk
+// Loading state saat submit bulk (tetap full-page, wajar untuk bulk)
 document.getElementById('bulkApproveForm')?.addEventListener('submit', function() {
   const btn = document.getElementById('bulkApproveSubmitBtn');
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Memproses...';
